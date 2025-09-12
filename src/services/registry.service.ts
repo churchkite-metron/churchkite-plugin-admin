@@ -18,18 +18,22 @@ function keyFor(siteUrl: string, pluginSlug: string) {
     return `${STORE_PREFIX}/${site}/${slug}.json`;
 }
 
-const store = getStore('churchkite-admin');
+function getRegistryStore() {
+    return getStore('churchkite-admin');
+}
 
 export async function registerPlugin(entry: Omit<RegisteredPlugin, 'firstSeen' | 'lastSeen'>) {
     const now = new Date().toISOString();
     const key = keyFor(entry.siteUrl, entry.pluginSlug);
     const payload: RegisteredPlugin = { ...entry, firstSeen: now, lastSeen: now };
+    const store = getRegistryStore();
     await store.setJSON(key, payload);
     return payload;
 }
 
 export async function heartbeat(siteUrl: string, pluginSlug: string, patch?: Partial<RegisteredPlugin>) {
     const key = keyFor(siteUrl, pluginSlug);
+    const store = getRegistryStore();
     const current = (await store.get(key, { type: 'json' })) as RegisteredPlugin | null;
     const now = new Date().toISOString();
     const updated: RegisteredPlugin = current
@@ -49,12 +53,14 @@ export async function heartbeat(siteUrl: string, pluginSlug: string, patch?: Par
 
 export async function deregister(siteUrl: string, pluginSlug: string) {
     const key = keyFor(siteUrl, pluginSlug);
+    const store = getRegistryStore();
     await store.delete(key);
 }
 
 export async function listAll() {
     const out: RegisteredPlugin[] = [];
     const prefix = `${STORE_PREFIX}/`;
+    const store = getRegistryStore();
     const listing = await store.list({ prefix });
     for (const item of listing.blobs) {
         if (!item.key.endsWith('.json')) continue;
