@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { WordPressService } from '../services/wordpress.service';
+import { listAll } from '../services/registry.service';
 
 function getSitesFromEnv(): string[] {
     const raw = process.env.WORDPRESS_SITES || '';
@@ -9,13 +10,24 @@ function getSitesFromEnv(): string[] {
         .filter(Boolean);
 }
 
+async function getSites(): Promise<string[]> {
+    try {
+        const items = await listAll();
+        const sites = Array.from(new Set(items.map(i => i.siteUrl))).sort();
+        if (sites.length > 0) return sites;
+    } catch {
+        // Ignore and fall back to env
+    }
+    return getSitesFromEnv();
+}
+
 export class PluginsController {
     public async getPlugins(req: Request, res: Response): Promise<void> {
         try {
-            const sites = getSitesFromEnv();
+            const sites = await getSites();
             const selectedSite = (req.query.site as string) || process.env.WORDPRESS_API_URL || sites[0] || '';
             if (!selectedSite) {
-                res.status(400).send('No site configured. Set WORDPRESS_SITES or WORDPRESS_API_URL.');
+                res.status(400).send('No site found. Ensure a plugin registers or set WORDPRESS_SITES/WORDPRESS_API_URL.');
                 return;
             }
             const wp = new WordPressService(selectedSite);
