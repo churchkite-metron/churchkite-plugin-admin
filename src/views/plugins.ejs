@@ -1,14 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plugin Management</title>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
+
 <body>
     <div class="container">
         <h1>Manage Plugins</h1>
+        <form method="GET" action="/plugins" style="margin-bottom: 1rem;">
+            <label for="site">Site:</label>
+            <select name="site" id="site" onchange="this.form.submit()">
+                <% (sites || []).forEach(function(site) { %>
+                    <option value="<%= site %>" <%=selectedSite===site ? 'selected' : '' %>><%= site %>
+                    </option>
+                    <% }) %>
+            </select>
+        </form>
         <table>
             <thead>
                 <tr>
@@ -18,19 +29,25 @@
                 </tr>
             </thead>
             <tbody>
-                <% plugins.forEach(plugin => { %>
+                <% plugins.forEach(plugin=> { %>
                     <tr>
-                        <td><%= plugin.name %></td>
-                        <td><%= plugin.status %></td>
                         <td>
-                            <form action="/plugins/update/<%= plugin.id %>" method="POST">
+                            <%= plugin.name %>
+                        </td>
+                        <td>
+                            <%= plugin.status %>
+                        </td>
+                        <td>
+                            <form action="/plugins/update/<%= plugin.id %>?site=<%= encodeURIComponent(selectedSite) %>"
+                                method="POST">
                                 <button type="submit">Toggle Status</button>
                             </form>
                         </td>
                     </tr>
-                <% }); %>
+                    <% }); %>
             </tbody>
         </table>
     </div>
 </body>
+
 </html>

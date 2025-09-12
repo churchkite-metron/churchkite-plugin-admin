@@ -3,13 +3,17 @@
 document.addEventListener('DOMContentLoaded', () => {
     const pluginList = document.getElementById('plugin-list');
 
+    const params = new URLSearchParams(window.location.search);
+    const site = params.get('site') || '';
+
     if (pluginList) {
         fetchPlugins();
     }
 
     async function fetchPlugins() {
         try {
-            const response = await fetch('/api/plugins');
+            const url = site ? `/api/plugins?site=${encodeURIComponent(site)}` : '/api/plugins';
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Failed to fetch plugins');
             const data = await response.json();
             renderPlugins(data);
@@ -34,7 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const id = updateBtn?.dataset?.id;
             if (!id) return;
-            const response = await fetch(`/api/plugins/update/${id}`, {
+            const url = site ? `/api/plugins/update/${id}?site=${encodeURIComponent(site)}` : `/api/plugins/update/${id}`;
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });

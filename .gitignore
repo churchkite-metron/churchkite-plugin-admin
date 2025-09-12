@@ -33,3 +33,6 @@ pnpm-debug.log*
 *.log
 *.tmp
 *.swp
+
+# Local Netlify folder
+.netlify
