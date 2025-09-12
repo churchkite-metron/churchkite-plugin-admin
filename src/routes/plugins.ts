@@ -6,5 +6,5 @@ const pluginsController = new PluginsController();
 
 export function setRoutes(app: Router) {
     app.get('/api/plugins', pluginsController.getPlugins.bind(pluginsController));
-    app.put('/api/plugins/:id', pluginsController.updatePlugin.bind(pluginsController));
+    app.put('/api/plugins/:id', pluginsController.updatePluginStatus.bind(pluginsController));
 }
