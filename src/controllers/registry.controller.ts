@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { deregister, heartbeat, listAll, registerPlugin, markVerified, getOne } from '../services/registry.service';
+import { deregister, heartbeat, listAll, registerPlugin, markVerified, getOne, saveInventory } from '../services/registry.service';
 
 const HEADER = 'x-registration-key';
 
@@ -42,12 +42,28 @@ export async function postRegister(req: Request, res: Response) {
 }
 
 export async function postHeartbeat(req: Request, res: Response) {
-    const { siteUrl, pluginSlug, pluginVersion, wpVersion, repoUrl } = req.body || {};
+    const { siteUrl, pluginSlug, pluginVersion, wpVersion, repoUrl, token, proofEndpoint } = req.body || {};
     if (!siteUrl || !pluginSlug) return res.status(400).json({ error: 'siteUrl and pluginSlug required' });
     try {
+        let current = await getOne(siteUrl, pluginSlug);
         if (!checkKey(req)) {
-            const current = await getOne(siteUrl, pluginSlug);
-            if (!current || !current.verified) return res.status(401).json({ error: 'Unauthorized' });
+            if (!current || !current.verified) {
+                if (token && proofEndpoint) {
+                    const gfetch: any = (globalThis as any).fetch;
+                    if (typeof gfetch === 'function') {
+                        try {
+                            const url = new URL(proofEndpoint);
+                            url.searchParams.set('token', token);
+                            const resp = await gfetch(url.toString(), { method: 'GET' });
+                            if (resp && resp.ok) {
+                                await markVerified(siteUrl, pluginSlug, proofEndpoint);
+                                current = await getOne(siteUrl, pluginSlug);
+                            }
+                        } catch { }
+                    }
+                }
+                if (!current || !current.verified) return res.status(401).json({ error: 'Unauthorized' });
+            }
         }
         const saved = await heartbeat(siteUrl, pluginSlug, { pluginVersion, wpVersion, repoUrl } as any);
         res.json(saved);
@@ -85,5 +101,36 @@ export async function getSites(req: Request, res: Response) {
         res.json({ sites: Array.from(bySite.values()), items: all });
     } catch (e: any) {
         res.status(500).json({ error: 'Failed to list sites', detail: e?.message });
+    }
+}
+
+export async function postInventory(req: Request, res: Response) {
+    const { siteUrl, plugins, wpVersion, phpVersion, token, proofEndpoint } = req.body || {};
+    if (!siteUrl || !Array.isArray(plugins)) return res.status(400).json({ error: 'siteUrl and plugins[] required' });
+    try {
+        let current = await getOne(siteUrl, 'churchkite-connector');
+        if (!checkKey(req)) {
+            if (!current || !current.verified) {
+                if (token && proofEndpoint) {
+                    const gfetch: any = (globalThis as any).fetch;
+                    if (typeof gfetch === 'function') {
+                        try {
+                            const url = new URL(proofEndpoint);
+                            url.searchParams.set('token', token);
+                            const resp = await gfetch(url.toString(), { method: 'GET' });
+                            if (resp && resp.ok) {
+                                await markVerified(siteUrl, 'churchkite-connector', proofEndpoint);
+                                current = await getOne(siteUrl, 'churchkite-connector');
+                            }
+                        } catch { }
+                    }
+                }
+                if (!current || !current.verified) return res.status(401).json({ error: 'Unauthorized' });
+            }
+        }
+        const saved = await saveInventory({ siteUrl, wpVersion, phpVersion, collectedAt: new Date().toISOString(), plugins });
+        res.json({ ok: true, inventory: saved });
+    } catch (e: any) {
+        res.status(500).json({ error: 'Failed to save inventory', detail: e?.message });
     }
 }

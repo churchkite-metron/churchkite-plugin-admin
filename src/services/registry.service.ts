@@ -14,6 +14,7 @@ export type RegisteredPlugin = {
 };
 
 const STORE_PREFIX = 'registrations';
+const INV_PREFIX = 'inventory';
 
 function keyFor(siteUrl: string, pluginSlug: string) {
     const site = encodeURIComponent(siteUrl);
@@ -92,4 +93,39 @@ export async function getOne(siteUrl: string, pluginSlug: string) {
     const store = getRegistryStore();
     const rec = (await store.get(key, { type: 'json' })) as RegisteredPlugin | null;
     return rec || null;
+}
+
+export type InventoryItem = {
+    slug: string;
+    name: string;
+    version: string;
+    active: boolean;
+    updateAvailable?: boolean;
+    newVersion?: string | null;
+};
+
+export type SiteInventory = {
+    siteUrl: string;
+    wpVersion?: string;
+    phpVersion?: string;
+    collectedAt: string;
+    plugins: InventoryItem[];
+};
+
+function invKeyFor(siteUrl: string) {
+    return `${INV_PREFIX}/${encodeURIComponent(siteUrl)}.json`;
+}
+
+export async function saveInventory(inv: SiteInventory) {
+    const key = invKeyFor(inv.siteUrl);
+    const store = getRegistryStore();
+    await store.setJSON(key, inv);
+    return inv;
+}
+
+export async function getInventory(siteUrl: string) {
+    const key = invKeyFor(siteUrl);
+    const store = getRegistryStore();
+    const inv = (await store.get(key, { type: 'json' })) as SiteInventory | null;
+    return inv || null;
 }
