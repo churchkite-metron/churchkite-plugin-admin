@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { deregister, heartbeat, listAll, registerPlugin } from '../services/registry.service';
+import { deregister, heartbeat, listAll, registerPlugin, markVerified, getOne } from '../services/registry.service';
 
 const HEADER = 'x-registration-key';
 
@@ -10,22 +10,45 @@ function checkKey(req: Request) {
 }
 
 export async function postRegister(req: Request, res: Response) {
-    if (!checkKey(req)) return res.status(401).json({ error: 'Unauthorized' });
-    const { siteUrl, pluginSlug, pluginVersion, wpVersion, repoUrl } = req.body || {};
+    const { siteUrl, pluginSlug, pluginVersion, wpVersion, repoUrl, token, proofEndpoint } = req.body || {};
     if (!siteUrl || !pluginSlug) return res.status(400).json({ error: 'siteUrl and pluginSlug required' });
     try {
-        const saved = await registerPlugin({ siteUrl, pluginSlug, pluginVersion, wpVersion, repoUrl });
-        res.json(saved);
+        const saved = await registerPlugin({ siteUrl, pluginSlug, pluginVersion, wpVersion, repoUrl, verifyUrl: proofEndpoint ?? null } as any);
+        if (checkKey(req)) {
+            const verified = await markVerified(siteUrl, pluginSlug, proofEndpoint ?? undefined);
+            return res.json(verified ?? saved);
+        }
+        if (token && proofEndpoint) {
+            const gfetch: any = (globalThis as any).fetch;
+            if (typeof gfetch === 'function') {
+                try {
+                    const url = new URL(proofEndpoint);
+                    url.searchParams.set('token', token);
+                    const resp = await gfetch(url.toString(), { method: 'GET' });
+                    if (resp && resp.ok) {
+                        const verified = await markVerified(siteUrl, pluginSlug, proofEndpoint);
+                        return res.json(verified ?? saved);
+                    }
+                } catch {
+                    // ignore and fallthrough
+                }
+            }
+            return res.status(202).json({ message: 'Registration received, pending verification', record: saved });
+        }
+        return res.status(202).json({ message: 'Registration received', record: saved });
     } catch (e: any) {
         res.status(500).json({ error: 'Failed to register', detail: e?.message });
     }
 }
 
 export async function postHeartbeat(req: Request, res: Response) {
-    if (!checkKey(req)) return res.status(401).json({ error: 'Unauthorized' });
     const { siteUrl, pluginSlug, pluginVersion, wpVersion, repoUrl } = req.body || {};
     if (!siteUrl || !pluginSlug) return res.status(400).json({ error: 'siteUrl and pluginSlug required' });
     try {
+        if (!checkKey(req)) {
+            const current = await getOne(siteUrl, pluginSlug);
+            if (!current || !current.verified) return res.status(401).json({ error: 'Unauthorized' });
+        }
         const saved = await heartbeat(siteUrl, pluginSlug, { pluginVersion, wpVersion, repoUrl } as any);
         res.json(saved);
     } catch (e: any) {
@@ -34,10 +57,13 @@ export async function postHeartbeat(req: Request, res: Response) {
 }
 
 export async function postDeregister(req: Request, res: Response) {
-    if (!checkKey(req)) return res.status(401).json({ error: 'Unauthorized' });
     const { siteUrl, pluginSlug } = req.body || {};
     if (!siteUrl || !pluginSlug) return res.status(400).json({ error: 'siteUrl and pluginSlug required' });
     try {
+        if (!checkKey(req)) {
+            const current = await getOne(siteUrl, pluginSlug);
+            if (!current || !current.verified) return res.status(401).json({ error: 'Unauthorized' });
+        }
         await deregister(siteUrl, pluginSlug);
         res.json({ ok: true });
     } catch (e: any) {
@@ -46,7 +72,6 @@ export async function postDeregister(req: Request, res: Response) {
 }
 
 export async function getSites(req: Request, res: Response) {
-    if (!checkKey(req)) return res.status(401).json({ error: 'Unauthorized' });
     try {
         const all = await listAll();
         // Collapse to site-level unique list with lastSeen per site

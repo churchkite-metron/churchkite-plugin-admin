@@ -6,6 +6,9 @@ export type RegisteredPlugin = {
     pluginVersion?: string;
     wpVersion?: string;
     repoUrl?: string;
+    verified?: boolean;
+    verifiedAt?: string | null;
+    verifyUrl?: string | null;
     firstSeen: string;
     lastSeen: string;
 };
@@ -25,7 +28,7 @@ function getRegistryStore() {
 export async function registerPlugin(entry: Omit<RegisteredPlugin, 'firstSeen' | 'lastSeen'>) {
     const now = new Date().toISOString();
     const key = keyFor(entry.siteUrl, entry.pluginSlug);
-    const payload: RegisteredPlugin = { ...entry, firstSeen: now, lastSeen: now };
+    const payload: RegisteredPlugin = { verified: false, verifiedAt: null, verifyUrl: null, ...entry, firstSeen: now, lastSeen: now };
     const store = getRegistryStore();
     await store.setJSON(key, payload);
     return payload;
@@ -44,6 +47,9 @@ export async function heartbeat(siteUrl: string, pluginSlug: string, patch?: Par
             pluginVersion: patch?.pluginVersion,
             wpVersion: patch?.wpVersion,
             repoUrl: patch?.repoUrl,
+            verified: false,
+            verifiedAt: null,
+            verifyUrl: null,
             firstSeen: now,
             lastSeen: now,
         };
@@ -68,4 +74,22 @@ export async function listAll() {
         if (rec && !(rec as any).deleted) out.push(rec);
     }
     return out;
+}
+
+export async function markVerified(siteUrl: string, pluginSlug: string, verifyUrl?: string) {
+    const key = keyFor(siteUrl, pluginSlug);
+    const store = getRegistryStore();
+    const current = (await store.get(key, { type: 'json' })) as RegisteredPlugin | null;
+    if (!current) return null;
+    const now = new Date().toISOString();
+    const updated: RegisteredPlugin = { ...current, verified: true, verifiedAt: now, verifyUrl: verifyUrl ?? current.verifyUrl ?? null };
+    await store.setJSON(key, updated);
+    return updated;
+}
+
+export async function getOne(siteUrl: string, pluginSlug: string) {
+    const key = keyFor(siteUrl, pluginSlug);
+    const store = getRegistryStore();
+    const rec = (await store.get(key, { type: 'json' })) as RegisteredPlugin | null;
+    return rec || null;
 }
