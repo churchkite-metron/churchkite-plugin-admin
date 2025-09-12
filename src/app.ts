@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { setRoutes } from './routes/plugins';
+import { registryRoutes } from './routes/registry';
 
 const app = express();
 
@@ -17,5 +18,6 @@ app.use(express.static(path.resolve(process.cwd(), 'public')));
 
 // Set up routes
 setRoutes(app);
+app.use('/api/registry', registryRoutes());
 
 export default app;
