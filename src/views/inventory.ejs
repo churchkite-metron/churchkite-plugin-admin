@@ -1,0 +1,55 @@
+<% layout('layout') -%>
+    <div class="container">
+        <h1>Site Inventory</h1>
+        <form method="get" action="/inventory" style="margin-bottom: 1rem;">
+            <label for="site">Site:</label>
+            <select id="site" name="site" onchange="this.form.submit()">
+                <% (sites || []).forEach(function(s){ %>
+                    <option value="<%= s %>" <%=selectedSite===s ? 'selected' : '' %>><%= s %>
+                    </option>
+                    <% }) %>
+            </select>
+        </form>
+        <% if (inventory) { %>
+            <p>Collected: <%= inventory.collectedAt %>
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Plugin</th>
+                        <th>Slug</th>
+                        <th>Version</th>
+                        <th>Active</th>
+                        <th>Update</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% inventory.plugins.forEach(function(p){ %>
+                        <tr>
+                            <td>
+                                <%= p.name %>
+                            </td>
+                            <td>
+                                <%= p.slug %>
+                            </td>
+                            <td>
+                                <%= p.version %>
+                            </td>
+                            <td>
+                                <%= p.active ? 'Yes' : 'No' %>
+                            </td>
+                            <td>
+                                <% if (p.updateAvailable) { %>
+                                    <span style="color:#b26a00;">Yes → <%= p.newVersion || '' %></span>
+                                    <% } else { %>
+                                        No
+                                        <% } %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                </tbody>
+            </table>
+            <% } else { %>
+                <p>No inventory found for this site yet.</p>
+                <% } %>
+    </div>

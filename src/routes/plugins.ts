@@ -25,6 +25,19 @@ export function setRoutes(app: Router) {
         }
     });
 
+    app.get('/inventory', async (req, res) => {
+        try {
+            const { listAll, getInventory } = await import('../services/registry.service');
+            const items = await listAll();
+            const sites = Array.from(new Set(items.map(i => i.siteUrl))).sort();
+            const selectedSite = (req.query.site as string) || sites[0] || '';
+            const inv = selectedSite ? await getInventory(selectedSite) : null;
+            res.render('inventory', { sites, selectedSite, inventory: inv });
+        } catch (e) {
+            res.status(500).send('Error loading inventory');
+        }
+    });
+
     // API endpoints (JSON)
     app.get('/api/plugins', pluginsController.getPlugins.bind(pluginsController));
     app.post('/api/plugins/update/:id', pluginsController.updatePluginStatus.bind(pluginsController));
