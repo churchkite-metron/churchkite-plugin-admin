@@ -1,4 +1,26 @@
 # ChurchKite Plugin Admin
+## Registry API quick test
+
+Set `REGISTRATION_API_KEY` in Netlify (already set via CI), then:
+
+```
+export SITE=https://churchkite-plugin-admin.netlify.app
+export KEY=<your-registration-api-key>
+
+curl -X POST "$SITE/api/registry/register" \
+   -H "Content-Type: application/json" \
+   -H "x-registration-key: $KEY" \
+   -d '{"siteUrl":"https://example.com","pluginSlug":"metron-youtube-importer","pluginVersion":"1.2.3","wpVersion":"6.6.2"}'
+
+curl "$SITE/api/registry/sites" -H "x-registration-key: $KEY"
+```
+
+## WordPress plugin setup
+
+- In WP admin, set ChurchKite Admin URL to your admin site URL (e.g., `$SITE`).
+- Set ChurchKite Registration Key to the same `REGISTRATION_API_KEY` value.
+- Activate the plugin to auto-register; deactivation auto-deregisters. A daily heartbeat is scheduled.
+# ChurchKite Plugin Admin
 
 This is a simple web application for managing WordPress plugins and their statuses. It provides an interface to interact with the WordPress API, allowing users to view and update plugin information.
 
