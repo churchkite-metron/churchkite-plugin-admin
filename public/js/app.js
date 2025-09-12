@@ -2,18 +2,20 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     const pluginList = document.getElementById('plugin-list');
-    
+
     if (pluginList) {
         fetchPlugins();
     }
 
-    function fetchPlugins() {
-        fetch('/api/plugins')
-            .then(response => response.json())
-            .then(data => {
-                renderPlugins(data);
-            })
-            .catch(error => console.error('Error fetching plugins:', error));
+    async function fetchPlugins() {
+        try {
+            const response = await fetch('/api/plugins');
+            if (!response.ok) throw new Error('Failed to fetch plugins');
+            const data = await response.json();
+            renderPlugins(data);
+        } catch (error) {
+            console.error('Error fetching plugins:', error);
+        }
     }
 
     function renderPlugins(plugins) {
@@ -25,20 +27,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('update-plugins').addEventListener('click', updatePlugins);
+    const updateBtn = document.getElementById('update-plugins');
+    if (updateBtn) updateBtn.addEventListener('click', updatePlugins);
 
-    function updatePlugins() {
-        fetch('/api/plugins/update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
+    async function updatePlugins() {
+        try {
+            const id = updateBtn?.dataset?.id;
+            if (!id) return;
+            const response = await fetch(`/api/plugins/update/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!response.ok) throw new Error('Failed to update plugin');
+            await fetchPlugins();
             alert('Plugins updated successfully!');
-            fetchPlugins();
-        })
-        .catch(error => console.error('Error updating plugins:', error));
+        } catch (error) {
+            console.error('Error updating plugins:', error);
+        }
     }
 });

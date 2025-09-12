@@ -1,15 +1,12 @@
 import express from 'express';
 import path from 'path';
-import { json, urlencoded } from 'body-parser';
 import { setRoutes } from './routes/plugins';
-import { authenticate } from './middlewares/auth';
 
 const app = express();
 
 // Middleware setup
-app.use(json());
-app.use(urlencoded({ extended: true }));
-app.use(authenticate);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // View engine setup
 app.set('view engine', 'ejs');
