@@ -24,24 +24,33 @@
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    <th>Slug</th>
+                    <th>Version</th>
+                    <th>Active</th>
+                    <th>Update</th>
                 </tr>
             </thead>
             <tbody>
-                <% plugins.forEach(plugin=> { %>
+                <% (plugins || []).forEach(plugin=> { %>
                     <tr>
                         <td>
                             <%= plugin.name %>
                         </td>
                         <td>
-                            <%= plugin.status %>
+                            <%= plugin.slug %>
                         </td>
                         <td>
-                            <form action="/plugins/update/<%= plugin.id %>?site=<%= encodeURIComponent(selectedSite) %>"
-                                method="POST">
-                                <button type="submit">Toggle Status</button>
-                            </form>
+                            <%= plugin.version %>
+                        </td>
+                        <td>
+                            <%= plugin.active ? 'Yes' : 'No' %>
+                        </td>
+                        <td>
+                            <% if (plugin.updateAvailable) { %>
+                                <span style="color:#b26a00;">Yes → <%= plugin.newVersion || '' %></span>
+                                <% } else { %>
+                                    No
+                                    <% } %>
                         </td>
                     </tr>
                     <% }); %>
