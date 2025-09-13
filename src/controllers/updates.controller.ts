@@ -82,7 +82,7 @@ export async function getDownload(req: Request, res: Response) {
         // 1) If token present, try GitHub API asset first
         if (token) {
             const apiResp = await fetch(meta.assetApiUrl, {
-                headers: { 'User-Agent': 'ChurchKite/Admin', 'Accept': 'application/octet-stream', 'Authorization': `Bearer ${token}` },
+                headers: { 'User-Agent': 'ChurchKite/Admin', 'Accept': 'application/octet-stream', 'Authorization': `token ${token}` },
                 redirect: 'follow',
             } as any);
             if (await tryStream(apiResp)) return;
