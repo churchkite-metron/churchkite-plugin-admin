@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Readable } from 'stream';
 import { getUpdate, saveUpdate } from '../services/updates.service';
 
 function pubKeyOk(req: Request) {
@@ -51,22 +52,40 @@ export async function getDownload(req: Request, res: Response) {
             },
             redirect: 'follow',
         } as any);
-        if (!(upstream as any)?.ok) return res.status(502).send('asset fetch failed');
+        if (!(upstream as any)?.ok) {
+            const status = (upstream as any).status;
+            const text = typeof (upstream as any).text === 'function' ? await (upstream as any).text() : '';
+            return res.status(502).send(`asset fetch failed (${status}): ${text || 'no details'}`);
+        }
         const ct = (upstream as any).headers?.get?.('content-type') || 'application/zip';
         res.setHeader('Content-Type', ct);
         res.setHeader('Content-Disposition', `attachment; filename="${slug}.zip"`);
         const body: any = (upstream as any).body;
-        if (body && typeof body.pipeTo === 'function') {
-            // @ts-ignore
-            await body.pipeTo(new WritableStream({ write: (chunk: any) => res.write(chunk), close: () => res.end() }));
-        } else if (body && typeof body.on === 'function') {
-            body.on('data', (c: any) => res.write(c));
-            body.on('end', () => res.end());
-            body.on('error', () => res.status(502).end());
-        } else {
-            const buf = Buffer.from(await (upstream as any).arrayBuffer());
-            res.end(buf);
+        if (body) {
+            try {
+                if (typeof (Readable as any).fromWeb === 'function' && typeof body.getReader === 'function') {
+                    const nodeStream = (Readable as any).fromWeb(body as any);
+                    nodeStream.on('error', () => {
+                        if (!res.headersSent) res.status(502);
+                        res.end();
+                    });
+                    nodeStream.pipe(res);
+                    return;
+                }
+                if (typeof body.pipe === 'function') {
+                    body.on('error', () => {
+                        if (!res.headersSent) res.status(502);
+                        res.end();
+                    });
+                    body.pipe(res);
+                    return;
+                }
+            } catch (_e) {
+                // fall through to arrayBuffer
+            }
         }
+        const buf = Buffer.from(await (upstream as any).arrayBuffer());
+        res.end(buf);
     } catch (e: any) {
         res.status(500).send('download failed');
     }
