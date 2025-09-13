@@ -43,49 +43,69 @@ export async function getDownload(req: Request, res: Response) {
         const meta = await getUpdate(slug);
         if (!meta?.assetApiUrl) return res.status(404).send('not found');
         const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
-        if (!token) return res.status(500).send('server not configured');
-        const upstream = await fetch(meta.assetApiUrl, {
-            headers: {
-                'User-Agent': 'ChurchKite/Admin',
-                'Accept': 'application/octet-stream',
-                'Authorization': `Bearer ${token}`,
-            },
-            redirect: 'follow',
-        } as any);
-        if (!(upstream as any)?.ok) {
-            const status = (upstream as any).status;
-            const text = typeof (upstream as any).text === 'function' ? await (upstream as any).text() : '';
+        const tryStream = async (resp: any) => {
+            if (!resp?.ok) return false;
+            const ct = resp.headers?.get?.('content-type') || 'application/zip';
+            res.setHeader('Content-Type', ct);
+            res.setHeader('Content-Disposition', `attachment; filename="${slug}.zip"`);
+            const body: any = resp.body;
+            if (body) {
+                try {
+                    if (typeof (Readable as any).fromWeb === 'function' && typeof body.getReader === 'function') {
+                        const nodeStream = (Readable as any).fromWeb(body as any);
+                        nodeStream.on('error', () => { if (!res.headersSent) res.status(502); res.end(); });
+                        nodeStream.pipe(res);
+                        return true;
+                    }
+                    if (typeof body.pipe === 'function') {
+                        body.on('error', () => { if (!res.headersSent) res.status(502); res.end(); });
+                        body.pipe(res);
+                        return true;
+                    }
+                } catch (_e) { /* fallthrough */ }
+            }
+            const buf = Buffer.from(await resp.arrayBuffer());
+            res.end(buf);
+            return true;
+        };
+
+        // Helper: derive public browser download URL from release URL
+        const deriveBrowserUrl = (): string | null => {
+            const m = (meta.url || '').match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/releases\/tag\/([^\s]+)$/);
+            if (!m) return null;
+            const owner = m[1];
+            const repo = m[2];
+            const tag = m[3];
+            return `https://github.com/${owner}/${repo}/releases/download/${tag}/${slug}.zip`;
+        };
+
+        // 1) If token present, try GitHub API asset first
+        if (token) {
+            const apiResp = await fetch(meta.assetApiUrl, {
+                headers: { 'User-Agent': 'ChurchKite/Admin', 'Accept': 'application/octet-stream', 'Authorization': `Bearer ${token}` },
+                redirect: 'follow',
+            } as any);
+            if (await tryStream(apiResp)) return;
+            // If API fetch fails, fall back to public browser URL if derivable
+            const pubUrl = deriveBrowserUrl();
+            if (pubUrl) {
+                const pubResp = await fetch(pubUrl, { headers: { 'User-Agent': 'ChurchKite/Admin' }, redirect: 'follow' } as any);
+                if (await tryStream(pubResp)) return;
+                return res.status(502).send('asset fetch failed (both API and public URL)');
+            }
+            const status = apiResp.status;
+            const text = typeof (apiResp as any).text === 'function' ? await (apiResp as any).text() : '';
             return res.status(502).send(`asset fetch failed (${status}): ${text || 'no details'}`);
         }
-        const ct = (upstream as any).headers?.get?.('content-type') || 'application/zip';
-        res.setHeader('Content-Type', ct);
-        res.setHeader('Content-Disposition', `attachment; filename="${slug}.zip"`);
-        const body: any = (upstream as any).body;
-        if (body) {
-            try {
-                if (typeof (Readable as any).fromWeb === 'function' && typeof body.getReader === 'function') {
-                    const nodeStream = (Readable as any).fromWeb(body as any);
-                    nodeStream.on('error', () => {
-                        if (!res.headersSent) res.status(502);
-                        res.end();
-                    });
-                    nodeStream.pipe(res);
-                    return;
-                }
-                if (typeof body.pipe === 'function') {
-                    body.on('error', () => {
-                        if (!res.headersSent) res.status(502);
-                        res.end();
-                    });
-                    body.pipe(res);
-                    return;
-                }
-            } catch (_e) {
-                // fall through to arrayBuffer
-            }
+
+        // 2) No token: try public browser URL
+        const pubUrl = deriveBrowserUrl();
+        if (pubUrl) {
+            const pubResp = await fetch(pubUrl, { headers: { 'User-Agent': 'ChurchKite/Admin' }, redirect: 'follow' } as any);
+            if (await tryStream(pubResp)) return;
+            return res.status(502).send('asset fetch failed (public URL)');
         }
-        const buf = Buffer.from(await (upstream as any).arrayBuffer());
-        res.end(buf);
+        return res.status(500).send('server not configured');
     } catch (e: any) {
         res.status(500).send('download failed');
     }
