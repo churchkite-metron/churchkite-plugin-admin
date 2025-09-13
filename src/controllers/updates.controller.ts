@@ -42,7 +42,7 @@ export async function getDownload(req: Request, res: Response) {
         if (!slug) return res.status(400).send('slug required');
         const meta = await getUpdate(slug);
         if (!meta?.assetApiUrl) return res.status(404).send('not found');
-        const token = process.env.GITHUB_TOKEN;
+        const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
         if (!token) return res.status(500).send('server not configured');
         const upstream = await fetch(meta.assetApiUrl, {
             headers: {
