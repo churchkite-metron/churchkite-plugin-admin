@@ -48,7 +48,6 @@ export async function getDownload(req: Request, res: Response) {
         const buf = await getAssetBuffer(slug);
         if (!buf) return res.status(404).send('asset not found');
         res.setHeader('Content-Type', 'application/zip');
-        res.setHeader('Content-Length', String(buf.length));
         res.setHeader('Content-Disposition', `attachment; filename="${slug}.zip"`);
         if (meta.sha256) res.setHeader('X-Expected-SHA256', meta.sha256);
         res.end(buf);
