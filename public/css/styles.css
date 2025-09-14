@@ -5,6 +5,7 @@
     --muted: #6b7280;
     --primary: #2563eb;
     --primary-600: #1d4ed8;
+    --primary-50: #eef2ff;
     --border: #e5e7eb;
     --warn-bg: #fff7e6;
     --warn-border: #ffe4b5;
@@ -52,6 +53,25 @@ h1 {
     border-bottom: 1px solid var(--border);
 }
 
+.nav-colored {
+    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-600) 100%);
+    border-bottom: none;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.nav-colored a {
+    color: #e8edff;
+}
+
+.nav-colored a:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.nav-colored .spacer {
+    opacity: 0.7;
+}
+
 .nav a {
     color: var(--primary);
     text-decoration: none;
@@ -88,6 +108,10 @@ h1 {
 
 .table-striped tbody tr:nth-child(even) {
     background: #fafcff;
+}
+
+.table tbody tr:hover {
+    background: #f8fbff;
 }
 
 label {
@@ -162,4 +186,26 @@ select {
     color: #8a5a00;
     background: #fff7e6;
     border-color: #ffe4b5;
+}
+
+.tag {
+    display: inline-block;
+    padding: .1rem .45rem;
+    font-size: .78rem;
+    border-radius: 6px;
+}
+
+.tag-green {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.tag-yellow {
+    background: #fefce8;
+    color: #854d0e;
+}
+
+.tag-gray {
+    background: #f3f4f6;
+    color: #374151;
 }

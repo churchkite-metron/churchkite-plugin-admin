@@ -14,7 +14,7 @@
         <% if (!isProd) { %>
             <div class="badge badge-local" style="margin:.5rem 0;">Local Mode</div>
             <% } %>
-                <div class="nav">
+                <div class="nav nav-colored">
                     <a href="/plugins">Plugins</a>
                     <a href="/sites">Sites</a>
                     <a href="/inventory">Inventory</a>
@@ -47,40 +47,40 @@
                                     <th>Version</th>
                                     <th>Active</th>
                                     <th>Update</th>
+                                    <td>
+                                        <% if (plugin.updateAvailable) { %>
+                                            <span class="tag tag-yellow">Yes → <%= plugin.newVersion || '' %></span>
+                                            <% } else { %>
+                                                <span class="tag tag-gray">No</span>
+                                                <% } %>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                <% if (!plugins || plugins.length===0) { %>
-                                    <tr>
-                                        <td colspan="5" style="color:#555;">No plugins to show for the selected site.
-                                        </td>
-                                    </tr>
-                                    <% } %>
-                                        <% (plugins || []).forEach(plugin=> { %>
-                                            <tr>
-                                                <td>
-                                                    <%= plugin.name %>
-                                                </td>
-                                                <td>
-                                                    <%= plugin.slug %>
-                                                </td>
-                                                <td>
-                                                    <%= plugin.version %>
-                                                </td>
-                                                <td>
-                                                    <%= plugin.active ? 'Yes' : 'No' %>
-                                                </td>
-                                                <td>
-                                                    <% if (plugin.updateAvailable) { %>
-                                                        <span style="color:#b26a00;">Yes → <%= plugin.newVersion || ''
-                                                                %></span>
-                                                        <% } else { %>
-                                                            No
-                                                            <% } %>
-                                                </td>
-                                            </tr>
-                                            <% }); %>
-                            </tbody>
+                                <% } %>
+                                    <% (plugins || []).forEach(plugin=> { %>
+                                        <tr>
+                                            <td>
+                                                <%= plugin.name %>
+                                            </td>
+                                            <td>
+                                                <%= plugin.slug %>
+                                            </td>
+                                            <td>
+                                                <%= plugin.version %>
+                                            </td>
+                                            <td>
+                                                <%= plugin.active ? 'Yes' : 'No' %>
+                                            </td>
+                                            <td>
+                                                <% if (plugin.updateAvailable) { %>
+                                                    <span style="color:#b26a00;">Yes → <%= plugin.newVersion || '' %>
+                                                            </span>
+                                                    <% } else { %>
+                                                        No
+                                                        <% } %>
+                                            </td>
+                                        </tr>
+                                        <% }); %>
+                                            </tbody>
                         </table>
     </div>
 </body>
