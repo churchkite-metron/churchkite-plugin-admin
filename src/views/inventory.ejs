@@ -58,10 +58,10 @@
                 <form method="get" action="/inventory" style="margin-bottom: 1rem;">
                     <label for="site">Site:</label>
                     <select id="site" name="site" onchange="this.form.submit()">
-                        <% (sites || []).forEach(function(s){ %>
+                        <% for (const s of (sites || [])) { %>
                             <option value="<%= s %>" <%=selectedSite===s ? 'selected' : '' %>><%= s %>
                             </option>
-                            <% }) %>
+                            <% } %>
                     </select>
                 </form>
                 <% if (!selectedSite) { %>
@@ -83,7 +83,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <% (inventory.plugins || []).forEach(function(p){ %>
+                                    <% for (const p of (inventory.plugins || [])) { %>
                                         <tr>
                                             <td>
                                                 <%= p.name %>
@@ -105,7 +105,7 @@
                                                         <% } %>
                                             </td>
                                         </tr>
-                                        <% }) %>
+                                        <% } %>
                                 </tbody>
                             </table>
                             <% } %>

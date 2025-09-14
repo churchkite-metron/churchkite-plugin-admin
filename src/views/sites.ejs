@@ -56,10 +56,8 @@
                 </div>
                 <h1>Registered Sites</h1>
                 <% if (!sites || sites.length===0) { %>
-                    <div
-                        style="background:#fff3cd;border:1px solid #ffe69c;padding:.75rem 1rem;margin-bottom:1rem;color:#664d03;">
-                        No sites registered yet. Activate the connector on a WordPress site to see it here.
-                    </div>
+                    <div class="alert alert-warning">No sites registered yet. Activate the connector on a WordPress site
+                        to see it here.</div>
                     <% } %>
                         <table class="table table-striped">
                             <thead>
@@ -70,7 +68,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <% (sites || []).forEach(function(site){ %>
+                                <% for (const site of (sites || [])) { %>
                                     <tr>
                                         <td><a href="/plugins?site=<%= encodeURIComponent(site.siteUrl) %>">
                                                 <%= site.siteUrl %>
@@ -80,8 +78,8 @@
                                         </td>
                                         <td>
                                             <%= (site.plugins || []).join(', ') %></td>
-                    </tr>
-                <% }) %>
+                                    </tr>
+                                <% } %>
             </tbody>
         </table>
     </div>
