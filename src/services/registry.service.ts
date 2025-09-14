@@ -102,6 +102,7 @@ export type InventoryItem = {
     active: boolean;
     updateAvailable?: boolean;
     newVersion?: string | null;
+    updateUri?: string;
 };
 
 export type SiteInventory = {

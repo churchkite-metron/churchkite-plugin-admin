@@ -56,56 +56,125 @@
                                 <h2>Plugin Status</h2>
                             </div>
                             <div class="card-body">
-                                <% if (!plugins || plugins.length===0) { %>
-                                    <div class="empty-state">
-                                        <p>No plugins to display for this site.</p>
-                                    </div>
-                                    <% } else { %>
-                                        <div class="table-wrap">
-                                            <table class="table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Name</th>
-                                                        <th>Slug</th>
-                                                        <th>Version</th>
-                                                        <th>Active</th>
-                                                        <th>Update</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <% for (const plugin of (plugins || [])) { %>
-                                                        <tr>
-                                                            <td>
-                                                                <%= plugin.name %>
-                                                            </td>
-                                                            <td>
-                                                                <%= plugin.slug %>
-                                                            </td>
-                                                            <td>
-                                                                <%= plugin.version %>
-                                                            </td>
-                                                            <td>
-                                                                <% if (plugin.active) { %>
-                                                                    <span class="tag tag-green">Yes</span>
-                                                                    <% } else { %>
-                                                                        <span class="tag tag-gray">No</span>
-                                                                        <% } %>
-                                                            </td>
-                                                            <td>
-                                                                <% if (plugin.updateAvailable) { %>
-                                                                    <span class="tag tag-yellow">Yes → <%=
-                                                                            plugin.newVersion || '' %>
-                                                                    </span>
-                                                                    <% } else { %>
-                                                                        <span class="tag tag-gray">No</span>
-                                                                        <% } %>
-                                                            </td>
-                                                        </tr>
-                                                        <% } %>
-                                                </tbody>
-                                            </table>
+                                <% const hasAny=(metronPlugins && metronPlugins.length) || (thirdPartyPlugins &&
+                                    thirdPartyPlugins.length); %>
+                                    <% if (!hasAny) { %>
+                                        <div class="empty-state">
+                                            <p>No plugins to display for this site.</p>
                                         </div>
-                                        <% } %>
+                                        <% } else { %>
+                                            <h3 style="margin-top:0">Metron Plugins (<%= (metronPlugins || []).length %>
+                                                    )</h3>
+                                            <% if ((metronPlugins || []).length===0) { %>
+                                                <div class="empty-state">
+                                                    <p>No Metron plugins detected.</p>
+                                                </div>
+                                                <% } else { %>
+                                                    <div class="table-wrap" style="margin-bottom:1rem">
+                                                        <table class="table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Name</th>
+                                                                    <th>Slug</th>
+                                                                    <th>Version</th>
+                                                                    <th>Active</th>
+                                                                    <th>Update</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <% for (const plugin of (metronPlugins || [])) { %>
+                                                                    <tr>
+                                                                        <td>
+                                                                            <%= plugin.name %>
+                                                                        </td>
+                                                                        <td>
+                                                                            <%= plugin.slug %>
+                                                                        </td>
+                                                                        <td>
+                                                                            <%= plugin.version %>
+                                                                        </td>
+                                                                        <td>
+                                                                            <% if (plugin.active) { %>
+                                                                                <span class="tag tag-green">Yes</span>
+                                                                                <% } else { %>
+                                                                                    <span class="tag tag-gray">No</span>
+                                                                                    <% } %>
+                                                                        </td>
+                                                                        <td>
+                                                                            <% if (plugin.updateAvailable) { %>
+                                                                                <span class="tag tag-yellow">Yes → <%=
+                                                                                        plugin.newVersion || '' %>
+                                                                                        </span>
+                                                                                <% } else { %>
+                                                                                    <span class="tag tag-gray">No</span>
+                                                                                    <% } %>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <% } %>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    <% } %>
+
+                                                        <h3>Third-Party Plugins (<%= (thirdPartyPlugins || []).length %>
+                                                                )</h3>
+                                                        <% if ((thirdPartyPlugins || []).length===0) { %>
+                                                            <div class="empty-state">
+                                                                <p>No third-party plugins detected.</p>
+                                                            </div>
+                                                            <% } else { %>
+                                                                <div class="table-wrap">
+                                                                    <table class="table">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>Name</th>
+                                                                                <th>Slug</th>
+                                                                                <th>Version</th>
+                                                                                <th>Active</th>
+                                                                                <th>Update</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            <% for (const plugin of (thirdPartyPlugins
+                                                                                || [])) { %>
+                                                                                <tr>
+                                                                                    <td>
+                                                                                        <%= plugin.name %>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <%= plugin.slug %>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <%= plugin.version %>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <% if (plugin.active) { %>
+                                                                                            <span
+                                                                                                class="tag tag-green">Yes</span>
+                                                                                            <% } else { %>
+                                                                                                <span
+                                                                                                    class="tag tag-gray">No</span>
+                                                                                                <% } %>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <% if (plugin.updateAvailable) {
+                                                                                            %>
+                                                                                            <span
+                                                                                                class="tag tag-yellow">Yes
+                                                                                                → <%= plugin.newVersion
+                                                                                                    || '' %></span>
+                                                                                            <% } else { %>
+                                                                                                <span
+                                                                                                    class="tag tag-gray">No</span>
+                                                                                                <% } %>
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <% } %>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                                <% } %>
+                                                                    <% } %>
                             </div>
                         </div>
     </div>

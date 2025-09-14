@@ -9,6 +9,18 @@ function getSitesFromEnv(): string[] {
         .filter(Boolean);
 }
 
+function getMetronMatcher() {
+    const prefixEnv = process.env.METRON_PLUGIN_PREFIXES || 'metron-,churchkite-';
+    const allowEnv = process.env.METRON_PLUGIN_SLUGS || 'churchkite-connector,metron-youtube-playlist-video-importer';
+    const prefixes = prefixEnv.split(',').map(s => s.trim()).filter(Boolean);
+    const allowlist = new Set(allowEnv.split(',').map(s => s.trim()).filter(Boolean));
+    return (slug: string) => {
+        if (!slug) return false;
+        if (allowlist.has(slug)) return true;
+        return prefixes.some(p => slug.startsWith(p));
+    };
+}
+
 async function getSites(): Promise<string[]> {
     try {
         const items = await listAll();
@@ -36,8 +48,13 @@ export class PluginsController {
                 active: p.active,
                 updateAvailable: p.updateAvailable,
                 newVersion: p.newVersion || null,
+                updateUri: (p as any).updateUri || undefined,
             }));
-            res.render('plugins', { plugins, sites, selectedSite, message });
+            const isMetron = getMetronMatcher();
+            const isMetronByUri = (u?: string) => !!(u && u.toLowerCase().startsWith('churchkite://'));
+            const metronPlugins = plugins.filter(p => isMetronByUri(p.updateUri) || isMetron(p.slug));
+            const thirdPartyPlugins = plugins.filter(p => !(isMetronByUri(p.updateUri) || isMetron(p.slug)));
+            res.render('plugins', { plugins, metronPlugins, thirdPartyPlugins, sites, selectedSite, message });
         } catch (error) {
             res.status(500).send('Error fetching plugins');
         }
