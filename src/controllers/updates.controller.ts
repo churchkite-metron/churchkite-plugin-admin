@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Readable } from 'stream';
 import { getUpdate, saveUpdate } from '../services/updates.service';
-import { hasAsset, getAssetBuffer, saveAssetVersion, getAssetStream } from '../services/assets.service';
+import { hasAsset, getAssetBuffer, saveAssetVersion } from '../services/assets.service';
 import crypto from 'crypto';
 
 function pubKeyOk(req: Request) {
@@ -44,37 +44,14 @@ export async function getDownload(req: Request, res: Response) {
         if (!slug) return res.status(400).send('slug required');
         const meta = await getUpdate(slug);
         if (!meta?.version) return res.status(404).send('not found');
-        // Try streaming first to avoid any buffer conversion issues
-        const stream = await getAssetStream(slug);
-        if (!stream) return res.status(404).send('asset not found');
-        // We don't have length metadata readily; compute sha256 on the fly for diagnostics
+        // Buffer path with explicit Content-Length; serverless-http will return in binary mode
+        const buf = await getAssetBuffer(slug);
+        if (!buf) return res.status(404).send('asset not found');
         res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Length', String(buf.length));
         res.setHeader('Content-Disposition', `attachment; filename="${slug}.zip"`);
         if (meta.sha256) res.setHeader('X-Expected-SHA256', meta.sha256);
-        // Announce trailer headers so clients can read after body
-        res.setHeader('Trailer', 'X-Bytes-Sent, X-Computed-SHA256');
-        let total = 0;
-        const hasher = crypto.createHash('sha256');
-        stream.on('data', (chunk: Buffer) => {
-            total += chunk.length;
-            hasher.update(chunk);
-        });
-        stream.on('end', () => {
-            const got = hasher.digest('hex');
-            // Send as HTTP trailers
-            res.addTrailers({ 'X-Bytes-Sent': String(total), 'X-Computed-SHA256': got });
-        });
-        stream.on('error', () => {
-            // fall back to buffer path
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            (async () => {
-                const buf = await getAssetBuffer(slug);
-                if (!buf) return res.status(404).send('asset not found');
-                res.setHeader('Content-Length', String(buf.length));
-                res.end(buf);
-            })();
-        });
-        stream.pipe(res);
+        res.end(buf);
     } catch (e: any) {
         res.status(500).send('download failed');
     }
