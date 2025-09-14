@@ -9,6 +9,10 @@ const app = express();
 
 // Middleware setup
 app.use((req, res, next) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    next();
+});
+app.use((req, res, next) => {
     const ct = req.headers['content-type'] || '';
     if (typeof ct === 'string' && (ct.includes('application/zip') || ct.includes('application/octet-stream'))) {
         return express.raw({ type: (req) => true, limit: '64mb' })(req, res, next);
