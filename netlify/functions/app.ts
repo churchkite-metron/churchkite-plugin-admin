@@ -10,7 +10,7 @@ export const handler = async (event: any, context: any) => {
     if (!cachedHandler) {
         const mod = await import('../../src/app');
         const app = mod.default;
-        cachedHandler = serverless(app);
+        cachedHandler = serverless(app, { binary: ['application/zip', 'application/octet-stream'] });
     }
     return cachedHandler(event, context);
 };
