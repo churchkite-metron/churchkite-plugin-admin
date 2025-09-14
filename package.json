@@ -32,6 +32,7 @@
     "serverless-http": "^3.2.0"
   },
   "devDependencies": {
+    "@types/ejs": "^3.1.5",
     "@types/express": "^4.17.11",
     "@types/node": "^14.14.31",
     "netlify-cli": "^23.5.1",

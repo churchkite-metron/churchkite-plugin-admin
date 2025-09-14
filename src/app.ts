@@ -1,4 +1,5 @@
 import express from 'express';
+import ejs from 'ejs';
 import path from 'path';
 import { setRoutes } from './routes/plugins';
 import { registryRoutes } from './routes/registry';
@@ -18,6 +19,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 // View engine setup
+app.engine('ejs', (ejs as any).__express);
 app.set('view engine', 'ejs');
 app.set('views', path.resolve(process.cwd(), 'src/views'));
 
