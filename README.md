@@ -46,6 +46,14 @@ curl -u "$ADMIN_USER:$ADMIN_PASS" -sI https://<your-site>.netlify.app/sites | se
 If `ADMIN_USER`/`ADMIN_PASS` are not configured, the server returns `500` for protected routes.
 
 During local development (`NODE_ENV !== 'production'`), Basic Auth is bypassed for convenience.
+
+### Logout
+
+Use the `/logout` route to clear Basic Auth in most browsers; it responds with `401` and a new `WWW-Authenticate` challenge, prompting the browser to forget cached credentials. Example:
+
+```bash
+open https://<your-site>.netlify.app/logout
+```
 ## Project Structure
 
 ```

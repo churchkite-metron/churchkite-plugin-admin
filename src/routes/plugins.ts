@@ -46,6 +46,13 @@ export function setRoutes(app: Router) {
         }
     });
 
+    // Logout: force browser to forget Basic Auth by responding 401 with challenge
+    app.get('/logout', (_req, res) => {
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('WWW-Authenticate', 'Basic realm="ChurchKite Admin"');
+        return res.status(401).send('Logged out');
+    });
+
     // API endpoints (JSON)
     app.get('/api/plugins', pluginsController.getPlugins.bind(pluginsController));
     app.post('/api/plugins/update/:id', pluginsController.updatePluginStatus.bind(pluginsController));
