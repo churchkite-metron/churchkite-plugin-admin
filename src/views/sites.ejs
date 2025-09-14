@@ -42,40 +42,46 @@
 
 <body>
     <div class="container">
-        <div class="nav">
-            <a href="/plugins">Plugins</a>
-            <a href="/sites">Sites</a>
-            <a href="/inventory">Inventory</a>
-            <% if (locals && locals.isProd) { %>
-                <a href="/logout" style="float:right">Logout</a>
-                <% } %>
-        </div>
-        <h1>Registered Sites</h1>
-        <% if (!sites || sites.length===0) { %>
+        <% if (!(locals && locals.isProd)) { %>
             <div
-                style="background:#fff3cd;border:1px solid #ffe69c;padding:.75rem 1rem;margin-bottom:1rem;color:#664d03;">
-                No sites registered yet. Activate the connector on a WordPress site to see it here.
+                style="background:#eef6ff;border:1px solid #b6daff;color:#084298;padding:.25rem .5rem;display:inline-block;border-radius:4px;margin-bottom:.5rem;">
+                Local Mode
             </div>
             <% } %>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Site URL</th>
-                            <th>Last Seen</th>
-                            <th>Plugins</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% (sites || []).forEach(function(site){ %>
-                            <tr>
-                                <td><a href="/plugins?site=<%= encodeURIComponent(site.siteUrl) %>">
-                                        <%= site.siteUrl %>
-                                    </a></td>
-                                <td>
-                                    <%= site.lastSeen %>
-                                </td>
-                                <td>
-                                    <%= (site.plugins || []).join(', ') %></td>
+                <div class="nav">
+                    <a href="/plugins">Plugins</a>
+                    <a href="/sites">Sites</a>
+                    <a href="/inventory">Inventory</a>
+                    <% if (locals && locals.isProd) { %>
+                        <a href="/logout" style="float:right">Logout</a>
+                        <% } %>
+                </div>
+                <h1>Registered Sites</h1>
+                <% if (!sites || sites.length===0) { %>
+                    <div
+                        style="background:#fff3cd;border:1px solid #ffe69c;padding:.75rem 1rem;margin-bottom:1rem;color:#664d03;">
+                        No sites registered yet. Activate the connector on a WordPress site to see it here.
+                    </div>
+                    <% } %>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Site URL</th>
+                                    <th>Last Seen</th>
+                                    <th>Plugins</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% (sites || []).forEach(function(site){ %>
+                                    <tr>
+                                        <td><a href="/plugins?site=<%= encodeURIComponent(site.siteUrl) %>">
+                                                <%= site.siteUrl %>
+                                            </a></td>
+                                        <td>
+                                            <%= site.lastSeen %>
+                                        </td>
+                                        <td>
+                                            <%= (site.plugins || []).join(', ') %></td>
                     </tr>
                 <% }) %>
             </tbody>
