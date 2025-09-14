@@ -18,9 +18,15 @@
                     <tr>
                         <th>Plugin</th>
                         <th>Slug</th>
-                        <th>Version</th>
-                        <th>Active</th>
-                        <th>Update</th>
+                        <% if (!selectedSite) { %>
+                            <div
+                                style="background:#fff3cd;border:1px solid #ffe69c;padding:.75rem 1rem;margin-bottom:1rem;color:#664d03;">
+                                No sites registered yet. Activate the connector on a WordPress site to see inventory
+                                here.
+                            </div>
+                            <% } else if (!inventory) { %>
+                                <th>Active</th>
+                                <th>Update</th>
                     </tr>
                 </thead>
                 <tbody>

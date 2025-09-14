@@ -1,83 +1,33 @@
 <% layout('layout') -%>
     <div class="container">
         <h1>Registered Sites</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Site URL</th>
-                    <th>Last Seen</th>
-                    <th>Plugins</th>
+        <% if (!sites || sites.length===0) { %>
+            <div
+                style="background:#fff3cd;border:1px solid #ffe69c;padding:.75rem 1rem;margin-bottom:1rem;color:#664d03;">
+                No sites registered yet. Activate the connector on a WordPress site to see it here.
+            </div>
+            <% } %>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Site URL</th>
+                            <th>Last Seen</th>
+                            <th>Plugins</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% (sites || []).forEach(function(site){ %>
+                            <tr>
+                                <td><a href="/plugins?site=<%= encodeURIComponent(site.siteUrl) %>">
+                                        <%= site.siteUrl %>
+                                    </a></td>
+                                <td>
+                                    <%= site.lastSeen %>
+                                </td>
+                                <td>
+                                    <%= (site.plugins || []).join(', ') %></td>
                 </tr>
-            </thead>
-            <tbody>
-                <% (sites || []).forEach(function(site){ %>
-                    <tr>
-                        <td><a href="/plugins?site=<%= encodeURIComponent(site.siteUrl) %>">
-                                <%= site.siteUrl %>
-                            </a></td>
-                        <td>
-                            <%= site.lastSeen %>
-                        </td>
-                        <td>
-                            <%= (site.plugins || []).join(', ') %></td>
-                                </tr>
-                        <% }) %>
-                        <% if (!sites || sites.length === 0) { %>
-                                <tr>
-                                        <td colspan="3">No sites registered yet.</td>
-                                </tr>
-                        <% } %>
-    </tbody>
-  </table>
+            <% }) %>
+        </tbody>
+    </table>
 </div>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registered Sites</title>
-    <link rel="stylesheet" href="/css/styles.css">
-    <style>
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
-        th { background: #f5f5f5; text-align: left; }
-        .container { max-width: 960px; margin: 2rem auto; }
-        .nav { margin-bottom: 1rem; }
-        .nav a { margin-right: .75rem; }
-    </style>
-    </head>
-<body>
-    <div class="container">
-        <div class="nav">
-            <a href="/">Home</a>
-            <a href="/plugins">Plugins</a>
-            <a href="/sites">Sites</a>
-        </div>
-        <h1>Registered Sites</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>Site URL</th>
-                    <th>Last Seen</th>
-                    <th>Plugins</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% (sites || []).forEach(function(site){ %>
-                    <tr>
-                        <td><a href="/plugins?site=<%= encodeURIComponent(site.siteUrl) %>"><%= site.siteUrl %></a></td>
-                        <td><%= site.lastSeen %></td>
-                        <td><%= (site.plugins || []).join(' , ') %></td>
-                    </tr>
-                <% }) %>
-                <% if (!sites || sites.length === 0) { %>
-                    <tr>
-                        <td colspan="3">No sites registered yet.</td>
-                    </tr>
-                <% } %>
-            </tbody>
-        </table>
-    </div>
-    <script src="/js/app.js"></script>
-</body>
-</html>
