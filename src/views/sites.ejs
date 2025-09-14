@@ -9,6 +9,35 @@
     <link rel="stylesheet" href="/css/styles.css">
     <script defer src="/js/app.js"></script>
     <style>
+        .container {
+            max-width: 960px;
+            margin: 2rem auto;
+        }
+
+        .nav {
+            margin-bottom: 1rem;
+        }
+
+        .nav a {
+            margin-right: .75rem;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: .5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background: #f5f5f5;
+            padding: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -23,19 +52,6 @@
         th {
             background: #f5f5f5;
             text-align: left;
-        }
-
-        .container {
-            max-width: 960px;
-            margin: 2rem auto;
-        }
-
-        .nav {
-            margin-bottom: 1rem;
-        }
-
-        .nav a {
-            margin-right: .75rem;
         }
     </style>
 </head>
@@ -54,34 +70,46 @@
                         <a href="/logout">Logout</a>
                         <% } %>
                 </div>
-                <h1>Registered Sites</h1>
+
+                <div class="page-header">
+                    <h1>Registered Sites</h1>
+                </div>
+
                 <% if (!sites || sites.length===0) { %>
                     <div class="alert alert-warning">No sites registered yet. Activate the connector on a WordPress site
                         to see it here.</div>
-                    <% } %>
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Site URL</th>
-                                    <th>Last Seen</th>
-                                    <th>Plugins</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% for (const site of (sites || [])) { %>
-                                    <tr>
-                                        <td><a href="/plugins?site=<%= encodeURIComponent(site.siteUrl) %>">
-                                                <%= site.siteUrl %>
-                                            </a></td>
-                                        <td>
-                                            <%= site.lastSeen %>
-                                        </td>
-                                        <td>
-                                            <%= (site.plugins || []).join(', ') %></td>
-                                    </tr>
-                                <% } %>
-            </tbody>
-        </table>
+                    <% } else { %>
+                        <div class="card">
+                            <div class="card-header">
+                                <h2>All Sites</h2>
+                            </div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Site URL</th>
+                                            <th>Last Seen</th>
+                                            <th>Plugins</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% for (const site of (sites || [])) { %>
+                                            <tr>
+                                                <td><a href="/plugins?site=<%= encodeURIComponent(site.siteUrl) %>">
+                                                        <%= site.siteUrl %>
+                                                    </a></td>
+                                                <td>
+                                                    <%= site.lastSeen %>
+                                                </td>
+                                                <td>
+                                                    <%= (site.plugins || []).join(', ') %></td>
+                                            </tr>
+                                        <% } %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                <% } %>
     </div>
 </body>
 </html>

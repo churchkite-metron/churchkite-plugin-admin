@@ -23,57 +23,89 @@
                         <a href="/logout">Logout</a>
                         <% } %>
                 </div>
-                <h1>Manage Plugins</h1>
+                <div class="page-header">
+                    <h1>Manage Plugins</h1>
+                </div>
                 <% if (typeof message==='string' && message) { %>
                     <div class="alert alert-warning">
                         <%= message %>
                     </div>
                     <% } %>
-                        <form method="GET" action="/plugins" style="margin-bottom: .5rem;">
-                            <label for="site">Site:</label>
-                            <select name="site" id="site" onchange="this.form.submit()">
-                                <% for (const site of (sites || [])) { %>
-                                    <option value="<%= site %>" <%=selectedSite===site ? 'selected' : '' %>><%= site %>
-                                    </option>
-                                    <% } %>
-                            </select>
-                        </form>
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Slug</th>
-                                    <th>Version</th>
-                                    <th>Active</th>
-                                    <th>Update</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% for (const plugin of (plugins || [])) { %>
-                                    <tr>
-                                        <td>
-                                            <%= plugin.name %>
-                                        </td>
-                                        <td>
-                                            <%= plugin.slug %>
-                                        </td>
-                                        <td>
-                                            <%= plugin.version %>
-                                        </td>
-                                        <td>
-                                            <%= plugin.active ? 'Yes' : 'No' %>
-                                        </td>
-                                        <td>
-                                            <% if (plugin.updateAvailable) { %>
-                                                <span class="tag tag-yellow">Yes → <%= plugin.newVersion || '' %></span>
-                                                <% } else { %>
-                                                    <span class="tag tag-gray">No</span>
+                        <div class="card">
+                            <div class="card-header">
+                                <h2>Site Selection</h2>
+                            </div>
+                            <div class="card-body">
+                                <form method="GET" action="/plugins">
+                                    <div class="form-group">
+                                        <label for="site">Select a site to view its plugins:</label>
+                                        <select name="site" id="site" class="form-control"
+                                            onchange="this.form.submit()">
+                                            <% for (const site of (sites || [])) { %>
+                                                <option value="<%= site %>" <%=selectedSite===site ? 'selected' : '' %>>
+                                                    <%= site %>
+                                                </option>
+                                                <% } %>
+                                        </select>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h2>Plugin Status</h2>
+                            </div>
+                            <div class="card-body">
+                                <% if (!plugins || plugins.length===0) { %>
+                                    <div class="empty-state">
+                                        <p>No plugins to display for this site.</p>
+                                    </div>
+                                    <% } else { %>
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Slug</th>
+                                                    <th>Version</th>
+                                                    <th>Active</th>
+                                                    <th>Update</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% for (const plugin of (plugins || [])) { %>
+                                                    <tr>
+                                                        <td>
+                                                            <%= plugin.name %>
+                                                        </td>
+                                                        <td>
+                                                            <%= plugin.slug %>
+                                                        </td>
+                                                        <td>
+                                                            <%= plugin.version %>
+                                                        </td>
+                                                        <td>
+                                                            <% if (plugin.active) { %>
+                                                                <span class="tag tag-green">Yes</span>
+                                                                <% } else { %>
+                                                                    <span class="tag tag-gray">No</span>
+                                                                    <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <% if (plugin.updateAvailable) { %>
+                                                                <span class="tag tag-yellow">Yes → <%= plugin.newVersion
+                                                                        || '' %>
+                                                                </span>
+                                                                <% } else { %>
+                                                                    <span class="tag tag-gray">No</span>
+                                                                    <% } %>
+                                                        </td>
+                                                    </tr>
                                                     <% } %>
-                                        </td>
-                                    </tr>
-                                    <% } %>
-                            </tbody>
-                        </table>
+                                            </tbody>
+                                        </table>
+                                        <% } %>
+                            </div>
+                        </div>
     </div>
 </body>
 
