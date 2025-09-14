@@ -4,20 +4,14 @@ import path from 'path';
 import { setRoutes } from './routes/plugins';
 import { registryRoutes } from './routes/registry';
 import updatesRoutes from './routes/updates';
+import { isProductionRequest } from './utils/env';
 
 const app = express();
 
 // Middleware setup
 app.use((req, res, next) => {
     (res as any).locals = (res as any).locals || {};
-    const hostHeader = (req.headers['x-forwarded-host'] as string) || (req.headers.host as string) || '';
-    const host = String(hostHeader).toLowerCase();
-    const prodHost = (process.env.PROD_HOST || '').toLowerCase();
-    const envSaysProd = (process.env.CONTEXT === 'production') || (process.env.NODE_ENV === 'production');
-    const isLocalHost = /localhost|127\.0\.0\.1/.test(host);
-    const isNetlifyPreview = host.includes('--'); // deploy-preview / branch deploy convention
-    const computedProd = prodHost ? host === prodHost : (!isLocalHost && !isNetlifyPreview);
-    (res as any).locals.isProd = envSaysProd || computedProd;
+    (res as any).locals.isProd = isProductionRequest(req);
     next();
 });
 app.use((req, res, next) => {

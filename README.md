@@ -33,6 +33,7 @@ The SSR pages (`/`, `/plugins`, `/sites`, `/inventory`) are protected with HTTP 
    - `ADMIN_PASS`: Password for the admin UI
 
 - Behavior:
+   - Auth is enforced on all Netlify deploys (production, branch, and deploy previews). It is only bypassed when running locally (localhost).
    - Requests without valid credentials receive `401` and `WWW-Authenticate: Basic realm="ChurchKite Admin"`.
    - API endpoints under `/api/updates/*` remain public for WordPress sites to reach the service.
 
@@ -45,7 +46,9 @@ curl -u "$ADMIN_USER:$ADMIN_PASS" -sI https://<your-site>.netlify.app/sites | se
 
 If `ADMIN_USER`/`ADMIN_PASS` are not configured, the server returns `500` for protected routes.
 
-During local development (`NODE_ENV !== 'production'`), Basic Auth is bypassed for convenience.
+During local development on `localhost`, Basic Auth is bypassed for convenience.
+
+You can set `PROD_HOST` to your canonical hostname (e.g., `churchkite-plugin-admin.netlify.app`) to make production detection explicit.
 
 ### Logout
 

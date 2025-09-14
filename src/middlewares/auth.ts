@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { isProductionRequest } from '../utils/env';
 
 function parseBasicAuth(header?: string) {
     if (!header) return null;
@@ -11,14 +12,7 @@ function parseBasicAuth(header?: string) {
 }
 
 export function basicAuthForSSR(req: Request, res: Response, next: NextFunction) {
-    const hostHeader = (req.headers['x-forwarded-host'] as string) || (req.headers.host as string) || '';
-    const host = String(hostHeader).toLowerCase();
-    const prodHost = (process.env.PROD_HOST || '').toLowerCase();
-    const envSaysProd = (process.env.CONTEXT === 'production') || (process.env.NODE_ENV === 'production');
-    const isLocalHost = /localhost|127\.0\.0\.1/.test(host);
-    const isNetlifyPreview = host.includes('--');
-    const computedProd = prodHost ? host === prodHost : (!isLocalHost && !isNetlifyPreview);
-    const isProd = envSaysProd || computedProd;
+    const isProd = isProductionRequest(req);
     if (!isProd) {
         return next();
     }
