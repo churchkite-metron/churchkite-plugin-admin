@@ -11,30 +11,37 @@ export function setRoutes(app: Router) {
     app.get('/sites', async (req, res) => {
         try {
             const { listAll } = await import('../services/registry.service');
-            const items = await listAll();
+            let items: any[] = [];
+            try { items = await listAll(); } catch { items = []; }
             const bySite = new Map<string, { siteUrl: string; lastSeen: string; plugins: string[] }>();
             for (const r of items) {
-                const e = bySite.get(r.siteUrl) || { siteUrl: r.siteUrl, lastSeen: r.lastSeen, plugins: [] };
-                e.lastSeen = e.lastSeen > r.lastSeen ? e.lastSeen : r.lastSeen;
-                if (!e.plugins.includes(r.pluginSlug)) e.plugins.push(r.pluginSlug);
-                bySite.set(r.siteUrl, e);
+                const existing = bySite.get(r.siteUrl);
+                const e: { siteUrl: string; lastSeen: string; plugins: string[] } = existing || { siteUrl: String(r.siteUrl), lastSeen: String(r.lastSeen), plugins: [] as string[] };
+                e.lastSeen = e.lastSeen > r.lastSeen ? e.lastSeen : String(r.lastSeen);
+                const slug = String(r.pluginSlug || '');
+                if (slug && !e.plugins.includes(slug)) e.plugins.push(slug);
+                bySite.set(String(r.siteUrl), e);
             }
-            res.render('sites', { sites: Array.from(bySite.values()) });
-        } catch (e) {
-            res.status(500).send('Error loading sites');
+            return res.render('sites', { sites: Array.from(bySite.values()) });
+        } catch {
+            return res.render('sites', { sites: [] });
         }
     });
 
     app.get('/inventory', async (req, res) => {
         try {
             const { listAll, getInventory } = await import('../services/registry.service');
-            const items = await listAll();
+            let items: any[] = [];
+            try { items = await listAll(); } catch { items = []; }
             const sites = Array.from(new Set(items.map(i => i.siteUrl))).sort();
             const selectedSite = (req.query.site as string) || sites[0] || '';
-            const inv = selectedSite ? await getInventory(selectedSite) : null;
-            res.render('inventory', { sites, selectedSite, inventory: inv });
-        } catch (e) {
-            res.status(500).send('Error loading inventory');
+            let inv = null;
+            if (selectedSite) {
+                try { inv = await getInventory(selectedSite); } catch { inv = null; }
+            }
+            return res.render('inventory', { sites, selectedSite, inventory: inv });
+        } catch {
+            return res.render('inventory', { sites: [], selectedSite: '', inventory: null });
         }
     });
 
