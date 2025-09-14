@@ -25,7 +25,8 @@ export function basicAuthForSSR(req: Request, res: Response, next: NextFunction)
     const expectedUser = process.env.ADMIN_USER || '';
     const expectedPass = process.env.ADMIN_PASS || '';
     if (!expectedUser || !expectedPass) {
-        return res.status(500).send('Admin credentials not configured');
+        res.setHeader('WWW-Authenticate', 'Basic realm="ChurchKite Admin"');
+        return res.status(401).send('Authentication required');
     }
     const creds = parseBasicAuth(req.headers['authorization']);
     if (creds && creds.user === expectedUser && creds.pass === expectedPass) {
