@@ -1,17 +1,32 @@
 import { Request, Response, NextFunction } from 'express';
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
-    // Placeholder for authentication logic
-    const token = req.headers['authorization'];
+function parseBasicAuth(header?: string) {
+    if (!header) return null;
+    const [scheme, encoded] = header.split(' ');
+    if (!scheme || scheme.toLowerCase() !== 'basic' || !encoded) return null;
+    const decoded = Buffer.from(encoded, 'base64').toString('utf8');
+    const idx = decoded.indexOf(':');
+    if (idx === -1) return null;
+    return { user: decoded.slice(0, idx), pass: decoded.slice(idx + 1) };
+}
 
-    if (token && isValidToken(token)) {
-        next();
-    } else {
-        res.status(401).json({ message: 'Unauthorized' });
+export function basicAuthForSSR(req: Request, res: Response, next: NextFunction) {
+    const expectedUser = process.env.ADMIN_USER || '';
+    const expectedPass = process.env.ADMIN_PASS || '';
+    if (!expectedUser || !expectedPass) {
+        return res.status(500).send('Admin credentials not configured');
     }
-};
+    const creds = parseBasicAuth(req.headers['authorization']);
+    if (creds && creds.user === expectedUser && creds.pass === expectedPass) {
+        return next();
+    }
+    res.setHeader('WWW-Authenticate', 'Basic realm="ChurchKite Admin"');
+    return res.status(401).send('Authentication required');
+}
 
-const isValidToken = (token: string): boolean => {
-    // Implement your token validation logic here
-    return token === 'your-valid-token'; // Example validation
+// Keep placeholder token-based auth for API if needed later
+export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+    const token = req.headers['authorization'];
+    if (token === `Bearer ${process.env.API_TOKEN}`) return next();
+    return res.status(401).json({ message: 'Unauthorized' });
 };

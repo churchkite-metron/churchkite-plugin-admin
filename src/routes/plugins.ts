@@ -1,14 +1,15 @@
 import { Router } from 'express';
 import { PluginsController } from '../controllers/plugins.controller';
+import { basicAuthForSSR } from '../middlewares/auth';
 
 const router = Router();
 const pluginsController = new PluginsController();
 
 export function setRoutes(app: Router) {
     // SSR pages
-    app.get('/', (req, res) => res.redirect('/plugins'));
-    app.get('/plugins', pluginsController.getPlugins.bind(pluginsController));
-    app.get('/sites', async (req, res) => {
+    app.get('/', basicAuthForSSR, (req, res) => res.redirect('/plugins'));
+    app.get('/plugins', basicAuthForSSR, pluginsController.getPlugins.bind(pluginsController));
+    app.get('/sites', basicAuthForSSR, async (req, res) => {
         try {
             const { listAll } = await import('../services/registry.service');
             let items: any[] = [];
@@ -28,7 +29,7 @@ export function setRoutes(app: Router) {
         }
     });
 
-    app.get('/inventory', async (req, res) => {
+    app.get('/inventory', basicAuthForSSR, async (req, res) => {
         try {
             const { listAll, getInventory } = await import('../services/registry.service');
             let items: any[] = [];

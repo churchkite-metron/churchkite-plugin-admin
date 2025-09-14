@@ -23,10 +23,27 @@ This is a simple web application for managing WordPress plugins and their status
 
 ## Features
 
-- List all installed plugins
-- Update plugin statuses
-- User authentication for secure access
 
+## Admin UI Authentication
+
+The SSR pages (`/`, `/plugins`, `/sites`, `/inventory`) are protected with HTTP Basic Auth.
+
+- Set environment variables in Netlify:
+   - `ADMIN_USER`: Username for the admin UI
+   - `ADMIN_PASS`: Password for the admin UI
+
+- Behavior:
+   - Requests without valid credentials receive `401` and `WWW-Authenticate: Basic realm="ChurchKite Admin"`.
+   - API endpoints under `/api/updates/*` remain public for WordPress sites to reach the service.
+
+- Verify from terminal:
+
+```bash
+curl -sI https://<your-site>.netlify.app/sites | sed -n '1,10p'
+curl -u "$ADMIN_USER:$ADMIN_PASS" -sI https://<your-site>.netlify.app/sites | sed -n '1,10p'
+```
+
+If `ADMIN_USER`/`ADMIN_PASS` are not configured, the server returns `500` for protected routes.
 ## Project Structure
 
 ```
