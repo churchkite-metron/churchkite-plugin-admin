@@ -9,6 +9,11 @@ const app = express();
 
 // Middleware setup
 app.use((req, res, next) => {
+    (res as any).locals = (res as any).locals || {};
+    (res as any).locals.isProd = process.env.NODE_ENV === 'production';
+    next();
+});
+app.use((req, res, next) => {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
     next();
 });
