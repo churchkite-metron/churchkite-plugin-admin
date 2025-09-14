@@ -8,6 +8,7 @@
 
 [functions."app"]
   included_files = ["src/views/**", "public/**"]
+  external_node_modules = ["ejs"]
 
 [[redirects]]
   from = "/*"
