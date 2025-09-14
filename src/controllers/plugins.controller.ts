@@ -51,8 +51,9 @@ export class PluginsController {
                 updateUri: (p as any).updateUri || undefined,
             }));
             const isMetronByUri = (u?: string) => !!(u && u.toLowerCase().startsWith('churchkite://'));
-            const metronPlugins = plugins.filter(p => isMetronByUri(p.updateUri));
-            const thirdPartyPlugins = plugins.filter(p => !isMetronByUri(p.updateUri));
+            const isConnector = (slug?: string) => slug === 'churchkite-connector';
+            const metronPlugins = plugins.filter(p => isMetronByUri(p.updateUri) || isConnector(p.slug));
+            const thirdPartyPlugins = plugins.filter(p => !(isMetronByUri(p.updateUri) || isConnector(p.slug)));
             res.render('plugins', { plugins, metronPlugins, thirdPartyPlugins, sites, selectedSite, message });
         } catch (error) {
             res.status(500).send('Error fetching plugins');
