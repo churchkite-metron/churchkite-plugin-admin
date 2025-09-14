@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { Readable } from 'stream';
 import { getUpdate, saveUpdate } from '../services/updates.service';
-import { hasAsset, getAssetBuffer, saveAsset } from '../services/assets.service';
+import { hasAsset, getAssetBuffer, saveAssetVersion } from '../services/assets.service';
+import crypto from 'crypto';
 
 function pubKeyOk(req: Request) {
     const expected = process.env.PUBLISH_API_KEY || '';
@@ -42,79 +43,13 @@ export async function getDownload(req: Request, res: Response) {
         const slug = String(req.query.slug || '');
         if (!slug) return res.status(400).send('slug required');
         const meta = await getUpdate(slug);
-        if (!meta?.assetApiUrl) return res.status(404).send('not found');
-        // Serve from local blob if present
-        if (await hasAsset(slug)) {
-            const buf = await getAssetBuffer(slug);
-            if (!buf) return res.status(502).send('asset missing');
-            res.setHeader('Content-Type', 'application/zip');
-            res.setHeader('Content-Disposition', `attachment; filename="${slug}.zip"`);
-            return res.end(buf);
-        }
-        const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
-        const tryStream = async (resp: any) => {
-            if (!resp?.ok) return false;
-            const ct = resp.headers?.get?.('content-type') || 'application/zip';
-            res.setHeader('Content-Type', ct);
-            res.setHeader('Content-Disposition', `attachment; filename="${slug}.zip"`);
-            const body: any = resp.body;
-            if (body) {
-                try {
-                    if (typeof (Readable as any).fromWeb === 'function' && typeof body.getReader === 'function') {
-                        const nodeStream = (Readable as any).fromWeb(body as any);
-                        nodeStream.on('error', () => { if (!res.headersSent) res.status(502); res.end(); });
-                        nodeStream.pipe(res);
-                        return true;
-                    }
-                    if (typeof body.pipe === 'function') {
-                        body.on('error', () => { if (!res.headersSent) res.status(502); res.end(); });
-                        body.pipe(res);
-                        return true;
-                    }
-                } catch (_e) { /* fallthrough */ }
-            }
-            const buf = Buffer.from(await resp.arrayBuffer());
-            res.end(buf);
-            return true;
-        };
-
-        // Helper: derive public browser download URL from release URL
-        const deriveBrowserUrl = (): string | null => {
-            const m = (meta.url || '').match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/releases\/tag\/([^\s]+)$/);
-            if (!m) return null;
-            const owner = m[1];
-            const repo = m[2];
-            const tag = m[3];
-            return `https://github.com/${owner}/${repo}/releases/download/${tag}/${slug}.zip`;
-        };
-
-        // 1) If token present, try GitHub API asset first
-        if (token) {
-            const apiResp = await fetch(meta.assetApiUrl, {
-                headers: { 'User-Agent': 'ChurchKite/Admin', 'Accept': 'application/octet-stream', 'Authorization': `token ${token}` },
-                redirect: 'follow',
-            } as any);
-            if (await tryStream(apiResp)) return;
-            // If API fetch fails, fall back to public browser URL if derivable
-            const pubUrl = deriveBrowserUrl();
-            if (pubUrl) {
-                const pubResp = await fetch(pubUrl, { headers: { 'User-Agent': 'ChurchKite/Admin' }, redirect: 'follow' } as any);
-                if (await tryStream(pubResp)) return;
-                return res.status(502).send('asset fetch failed (both API and public URL)');
-            }
-            const status = apiResp.status;
-            const text = typeof (apiResp as any).text === 'function' ? await (apiResp as any).text() : '';
-            return res.status(502).send(`asset fetch failed (${status}): ${text || 'no details'}`);
-        }
-
-        // 2) No token: try public browser URL
-        const pubUrl = deriveBrowserUrl();
-        if (pubUrl) {
-            const pubResp = await fetch(pubUrl, { headers: { 'User-Agent': 'ChurchKite/Admin' }, redirect: 'follow' } as any);
-            if (await tryStream(pubResp)) return;
-            return res.status(502).send('asset fetch failed (public URL)');
-        }
-        return res.status(500).send('server not configured');
+        if (!meta?.version) return res.status(404).send('not found');
+        // Blob-only: require asset to be present
+        const buf = await getAssetBuffer(slug);
+        if (!buf) return res.status(404).send('asset not found');
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${slug}.zip"`);
+        return res.end(buf);
     } catch (e: any) {
         res.status(500).send('download failed');
     }
@@ -132,10 +67,11 @@ export async function postUpload(req: Request, res: Response) {
         const body: any = (req as any).body;
         if (!body || !isZip) return res.status(400).json({ error: 'zip body required' });
         const buf = Buffer.isBuffer(body) ? body : Buffer.from(body);
-        await saveAsset(slug, buf, 'application/zip');
+        await saveAssetVersion(slug, version || 'latest', buf, 'application/zip');
+        const sha256 = crypto.createHash('sha256').update(buf).digest('hex');
         if (version) {
             const existing = await getUpdate(slug);
-            if (existing) await saveUpdate({ ...existing, version });
+            if (existing) await saveUpdate({ ...existing, version, sha256 });
         }
         res.json({ ok: true });
     } catch (e: any) {

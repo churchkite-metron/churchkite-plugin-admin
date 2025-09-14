@@ -7,6 +7,7 @@ export type UpdateMeta = {
     changelog?: string;
     assetApiUrl: string;
     createdAt: string;
+    sha256?: string;
 };
 
 const STORE_PREFIX = 'updates';
