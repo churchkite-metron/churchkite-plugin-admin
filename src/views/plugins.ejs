@@ -61,48 +61,50 @@
                                         <p>No plugins to display for this site.</p>
                                     </div>
                                     <% } else { %>
-                                        <table class="table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Name</th>
-                                                    <th>Slug</th>
-                                                    <th>Version</th>
-                                                    <th>Active</th>
-                                                    <th>Update</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <% for (const plugin of (plugins || [])) { %>
+                                        <div class="table-wrap">
+                                            <table class="table">
+                                                <thead>
                                                     <tr>
-                                                        <td>
-                                                            <%= plugin.name %>
-                                                        </td>
-                                                        <td>
-                                                            <%= plugin.slug %>
-                                                        </td>
-                                                        <td>
-                                                            <%= plugin.version %>
-                                                        </td>
-                                                        <td>
-                                                            <% if (plugin.active) { %>
-                                                                <span class="tag tag-green">Yes</span>
-                                                                <% } else { %>
-                                                                    <span class="tag tag-gray">No</span>
-                                                                    <% } %>
-                                                        </td>
-                                                        <td>
-                                                            <% if (plugin.updateAvailable) { %>
-                                                                <span class="tag tag-yellow">Yes → <%= plugin.newVersion
-                                                                        || '' %>
-                                                                </span>
-                                                                <% } else { %>
-                                                                    <span class="tag tag-gray">No</span>
-                                                                    <% } %>
-                                                        </td>
+                                                        <th>Name</th>
+                                                        <th>Slug</th>
+                                                        <th>Version</th>
+                                                        <th>Active</th>
+                                                        <th>Update</th>
                                                     </tr>
-                                                    <% } %>
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    <% for (const plugin of (plugins || [])) { %>
+                                                        <tr>
+                                                            <td>
+                                                                <%= plugin.name %>
+                                                            </td>
+                                                            <td>
+                                                                <%= plugin.slug %>
+                                                            </td>
+                                                            <td>
+                                                                <%= plugin.version %>
+                                                            </td>
+                                                            <td>
+                                                                <% if (plugin.active) { %>
+                                                                    <span class="tag tag-green">Yes</span>
+                                                                    <% } else { %>
+                                                                        <span class="tag tag-gray">No</span>
+                                                                        <% } %>
+                                                            </td>
+                                                            <td>
+                                                                <% if (plugin.updateAvailable) { %>
+                                                                    <span class="tag tag-yellow">Yes → <%=
+                                                                            plugin.newVersion || '' %>
+                                                                    </span>
+                                                                    <% } else { %>
+                                                                        <span class="tag tag-gray">No</span>
+                                                                        <% } %>
+                                                            </td>
+                                                        </tr>
+                                                        <% } %>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                         <% } %>
                             </div>
                         </div>

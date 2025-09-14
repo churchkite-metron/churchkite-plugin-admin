@@ -93,6 +93,13 @@ body {
     margin: 0 auto;
 }
 
+/* Legacy container wrapper used by current templates */
+.container {
+    max-width: 1200px;
+    margin: 24px auto;
+    padding: 0 24px;
+}
+
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -188,6 +195,12 @@ body {
 .table {
     width: 100%;
     border-collapse: collapse;
+}
+
+/* Wrap wide tables to allow horizontal scroll on smaller screens */
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
 }
 
 .table th,
