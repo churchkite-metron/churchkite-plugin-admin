@@ -12,17 +12,15 @@
 <body>
     <div class="container">
         <% if (!isProd) { %>
-            <div
-                style="background:#eef6ff;border:1px solid #b6daff;color:#084298;padding:.25rem .5rem;display:inline-block;border-radius:4px;margin-bottom:.5rem;">
-                Local Mode
-            </div>
+            <div class="badge badge-local" style="margin:.5rem 0;">Local Mode</div>
             <% } %>
-                <div class="nav" style="margin-bottom:1rem;">
+                <div class="nav">
                     <a href="/plugins">Plugins</a>
                     <a href="/sites">Sites</a>
                     <a href="/inventory">Inventory</a>
+                    <span class="spacer"></span>
                     <% if (isProd) { %>
-                        <a href="/logout" style="float:right">Logout</a>
+                        <a href="/logout">Logout</a>
                         <% } %>
                 </div>
                 <h1>Manage Plugins</h1>
@@ -32,7 +30,7 @@
                         <%= message %>
                     </div>
                     <% } %>
-                        <form method="GET" action="/plugins" style="margin-bottom: 1rem;">
+                        <form method="GET" action="/plugins" style="margin-bottom: .5rem;">
                             <label for="site">Site:</label>
                             <select name="site" id="site" onchange="this.form.submit()">
                                 <% (sites || []).forEach(function(site) { %>
@@ -41,7 +39,7 @@
                                     <% }) %>
                             </select>
                         </form>
-                        <table>
+                        <table class="table table-striped">
                             <thead>
                                 <tr>
                                     <th>Name</th>

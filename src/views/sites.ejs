@@ -43,17 +43,15 @@
 <body>
     <div class="container">
         <% if (!isProd) { %>
-            <div
-                style="background:#eef6ff;border:1px solid #b6daff;color:#084298;padding:.25rem .5rem;display:inline-block;border-radius:4px;margin-bottom:.5rem;">
-                Local Mode
-            </div>
+            <div class="badge badge-local" style="margin:.5rem 0;">Local Mode</div>
             <% } %>
                 <div class="nav">
                     <a href="/plugins">Plugins</a>
                     <a href="/sites">Sites</a>
                     <a href="/inventory">Inventory</a>
+                    <span class="spacer"></span>
                     <% if (isProd) { %>
-                        <a href="/logout" style="float:right">Logout</a>
+                        <a href="/logout">Logout</a>
                         <% } %>
                 </div>
                 <h1>Registered Sites</h1>
@@ -63,7 +61,7 @@
                         No sites registered yet. Activate the connector on a WordPress site to see it here.
                     </div>
                     <% } %>
-                        <table>
+                        <table class="table table-striped">
                             <thead>
                                 <tr>
                                     <th>Site URL</th>

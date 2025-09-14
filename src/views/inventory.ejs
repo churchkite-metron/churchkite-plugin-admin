@@ -43,17 +43,15 @@
 <body>
     <div class="container">
         <% if (!isProd) { %>
-            <div
-                style="background:#eef6ff;border:1px solid #b6daff;color:#084298;padding:.25rem .5rem;display:inline-block;border-radius:4px;margin-bottom:.5rem;">
-                Local Mode
-            </div>
+            <div class="badge badge-local" style="margin:.5rem 0;">Local Mode</div>
             <% } %>
                 <div class="nav">
                     <a href="/plugins">Plugins</a>
                     <a href="/sites">Sites</a>
                     <a href="/inventory">Inventory</a>
+                    <span class="spacer"></span>
                     <% if (isProd) { %>
-                        <a href="/logout" style="float:right">Logout</a>
+                        <a href="/logout">Logout</a>
                         <% } %>
                 </div>
                 <h1>Site Inventory</h1>
@@ -67,16 +65,14 @@
                     </select>
                 </form>
                 <% if (!selectedSite) { %>
-                    <div
-                        style="background:#fff3cd;border:1px solid #ffe69c;padding:.75rem 1rem;margin-bottom:1rem;color:#664d03;">
-                        No sites registered yet. Activate the connector on a WordPress site to see inventory here.
-                    </div>
+                    <div class="alert alert-warning">No sites registered yet. Activate the connector on a WordPress site
+                        to see inventory here.</div>
                     <% } else if (!inventory) { %>
                         <p>No inventory found for this site yet.</p>
                         <% } else { %>
                             <p>Collected: <%= inventory.collectedAt %>
                             </p>
-                            <table>
+                            <table class="table table-striped">
                                 <thead>
                                     <tr>
                                         <th>Plugin</th>
