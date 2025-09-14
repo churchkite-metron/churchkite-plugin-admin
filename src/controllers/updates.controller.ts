@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Readable } from 'stream';
 import { getUpdate, saveUpdate } from '../services/updates.service';
-import { hasAsset, getAssetBuffer, saveAssetVersion } from '../services/assets.service';
+import { hasAsset, getAssetBuffer, saveAssetVersion, getAssetStream } from '../services/assets.service';
 import crypto from 'crypto';
 
 function pubKeyOk(req: Request) {
@@ -44,12 +44,37 @@ export async function getDownload(req: Request, res: Response) {
         if (!slug) return res.status(400).send('slug required');
         const meta = await getUpdate(slug);
         if (!meta?.version) return res.status(404).send('not found');
-        // Blob-only: require asset to be present
-        const buf = await getAssetBuffer(slug);
-        if (!buf) return res.status(404).send('asset not found');
+        // Try streaming first to avoid any buffer conversion issues
+        const stream = await getAssetStream(slug);
+        if (!stream) return res.status(404).send('asset not found');
+        // We don't have length metadata readily; compute sha256 on the fly for diagnostics
         res.setHeader('Content-Type', 'application/zip');
         res.setHeader('Content-Disposition', `attachment; filename="${slug}.zip"`);
-        return res.end(buf);
+        if (meta.sha256) res.setHeader('X-Expected-SHA256', meta.sha256);
+        // Announce trailer headers so clients can read after body
+        res.setHeader('Trailer', 'X-Bytes-Sent, X-Computed-SHA256');
+        let total = 0;
+        const hasher = crypto.createHash('sha256');
+        stream.on('data', (chunk: Buffer) => {
+            total += chunk.length;
+            hasher.update(chunk);
+        });
+        stream.on('end', () => {
+            const got = hasher.digest('hex');
+            // Send as HTTP trailers
+            res.addTrailers({ 'X-Bytes-Sent': String(total), 'X-Computed-SHA256': got });
+        });
+        stream.on('error', () => {
+            // fall back to buffer path
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            (async () => {
+                const buf = await getAssetBuffer(slug);
+                if (!buf) return res.status(404).send('asset not found');
+                res.setHeader('Content-Length', String(buf.length));
+                res.end(buf);
+            })();
+        });
+        stream.pipe(res);
     } catch (e: any) {
         res.status(500).send('download failed');
     }
@@ -58,16 +83,44 @@ export async function getDownload(req: Request, res: Response) {
 export async function postUpload(req: Request, res: Response) {
     try {
         if (!pubKeyOk(req)) return res.status(401).json({ error: 'unauthorized' });
-        const slug = String(req.query.slug || '');
-        const version = String(req.query.version || '');
-        if (!slug) return res.status(400).json({ error: 'slug required' });
-        // raw body expected (application/zip)
         const contentType = req.headers['content-type'] || '';
-        const isZip = typeof contentType === 'string' && contentType.includes('application/zip');
-        const body: any = (req as any).body;
-        if (!body || !isZip) return res.status(400).json({ error: 'zip body required' });
-        const buf = Buffer.isBuffer(body) ? body : Buffer.from(body);
+        let slug = String(req.query.slug || '');
+        let version = String(req.query.version || '');
+        let buf: Buffer | null = null;
+        if (typeof contentType === 'string' && contentType.includes('application/json')) {
+            const b: any = (req as any).body;
+            const dataB64: string | undefined = b?.dataB64 || b?.data || undefined;
+            slug = slug || String(b?.slug || '');
+            version = version || String(b?.version || '');
+            if (!slug || !version || !dataB64) return res.status(400).json({ error: 'slug, version, dataB64 required' });
+            try {
+                // Ensure clean base64 string and proper binary decode
+                const cleanB64 = dataB64.replace(/\s/g, '');
+                buf = Buffer.from(cleanB64, 'base64');
+                if (buf.length === 0) throw new Error('empty buffer');
+            } catch (e) {
+                return res.status(400).json({ error: 'invalid base64: ' + (e as Error).message });
+            }
+        } else {
+            // raw body expected (application/zip or octet-stream)
+            const isZip = typeof contentType === 'string' && (contentType.includes('application/zip') || contentType.includes('application/octet-stream'));
+            const body: any = (req as any).body;
+            if (!body || !isZip) return res.status(400).json({ error: 'zip body required' });
+            buf = Buffer.isBuffer(body) ? body : Buffer.from(body as any);
+        }
+        if (!slug) return res.status(400).json({ error: 'slug required' });
+        if (!buf) return res.status(400).json({ error: 'no valid data received' });
         await saveAssetVersion(slug, version || 'latest', buf, 'application/zip');
+        // Verify round-trip integrity by reading back the versioned asset
+        try {
+            const { getVersionedAssetBuffer } = await import('../services/assets.service');
+            const back = await getVersionedAssetBuffer(slug, version || 'latest');
+            const s1 = crypto.createHash('sha256').update(buf).digest('hex');
+            const s2 = back ? crypto.createHash('sha256').update(back).digest('hex') : '';
+            if (!back || s1 !== s2) {
+                return res.status(500).json({ error: 'stored asset verification failed', got: back ? back.length : 0 });
+            }
+        } catch (_) { }
         const sha256 = crypto.createHash('sha256').update(buf).digest('hex');
         if (version) {
             const existing = await getUpdate(slug);
