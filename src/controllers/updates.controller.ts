@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Readable } from 'stream';
 import { getUpdate, saveUpdate } from '../services/updates.service';
+import { hasAsset, getAssetBuffer, saveAsset } from '../services/assets.service';
 
 function pubKeyOk(req: Request) {
     const expected = process.env.PUBLISH_API_KEY || '';
@@ -42,6 +43,14 @@ export async function getDownload(req: Request, res: Response) {
         if (!slug) return res.status(400).send('slug required');
         const meta = await getUpdate(slug);
         if (!meta?.assetApiUrl) return res.status(404).send('not found');
+        // Serve from local blob if present
+        if (await hasAsset(slug)) {
+            const buf = await getAssetBuffer(slug);
+            if (!buf) return res.status(502).send('asset missing');
+            res.setHeader('Content-Type', 'application/zip');
+            res.setHeader('Content-Disposition', `attachment; filename="${slug}.zip"`);
+            return res.end(buf);
+        }
         const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
         const tryStream = async (resp: any) => {
             if (!resp?.ok) return false;
@@ -108,5 +117,28 @@ export async function getDownload(req: Request, res: Response) {
         return res.status(500).send('server not configured');
     } catch (e: any) {
         res.status(500).send('download failed');
+    }
+}
+
+export async function postUpload(req: Request, res: Response) {
+    try {
+        if (!pubKeyOk(req)) return res.status(401).json({ error: 'unauthorized' });
+        const slug = String(req.query.slug || '');
+        const version = String(req.query.version || '');
+        if (!slug) return res.status(400).json({ error: 'slug required' });
+        // raw body expected (application/zip)
+        const contentType = req.headers['content-type'] || '';
+        const isZip = typeof contentType === 'string' && contentType.includes('application/zip');
+        const body: any = (req as any).body;
+        if (!body || !isZip) return res.status(400).json({ error: 'zip body required' });
+        const buf = Buffer.isBuffer(body) ? body : Buffer.from(body);
+        await saveAsset(slug, buf, 'application/zip');
+        if (version) {
+            const existing = await getUpdate(slug);
+            if (existing) await saveUpdate({ ...existing, version });
+        }
+        res.json({ ok: true });
+    } catch (e: any) {
+        res.status(500).json({ error: 'upload failed', detail: e?.message });
     }
 }

@@ -7,8 +7,15 @@ import updatesRoutes from './routes/updates';
 const app = express();
 
 // Middleware setup
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+    const ct = req.headers['content-type'] || '';
+    if (typeof ct === 'string' && ct.includes('application/zip')) {
+        return express.raw({ type: 'application/zip', limit: '64mb' })(req, res, next);
+    }
+    next();
+});
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 // View engine setup
 app.set('view engine', 'ejs');
