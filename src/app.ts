@@ -10,7 +10,8 @@ const app = express();
 // Middleware setup
 app.use((req, res, next) => {
     (res as any).locals = (res as any).locals || {};
-    (res as any).locals.isProd = process.env.NODE_ENV === 'production';
+    const isProd = (process.env.CONTEXT === 'production') || (process.env.NODE_ENV === 'production');
+    (res as any).locals.isProd = isProd;
     next();
 });
 app.use((req, res, next) => {
