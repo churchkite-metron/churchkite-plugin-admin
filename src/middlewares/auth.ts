@@ -11,6 +11,9 @@ function parseBasicAuth(header?: string) {
 }
 
 export function basicAuthForSSR(req: Request, res: Response, next: NextFunction) {
+    if (process.env.NODE_ENV !== 'production') {
+        return next();
+    }
     const expectedUser = process.env.ADMIN_USER || '';
     const expectedPass = process.env.ADMIN_PASS || '';
     if (!expectedUser || !expectedPass) {

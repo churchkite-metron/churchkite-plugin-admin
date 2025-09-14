@@ -44,6 +44,8 @@ curl -u "$ADMIN_USER:$ADMIN_PASS" -sI https://<your-site>.netlify.app/sites | se
 ```
 
 If `ADMIN_USER`/`ADMIN_PASS` are not configured, the server returns `500` for protected routes.
+
+During local development (`NODE_ENV !== 'production'`), Basic Auth is bypassed for convenience.
 ## Project Structure
 
 ```
