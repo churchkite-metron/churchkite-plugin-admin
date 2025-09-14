@@ -11,51 +11,62 @@
 <body>
     <div class="container">
         <h1>Manage Plugins</h1>
-        <form method="GET" action="/plugins" style="margin-bottom: 1rem;">
-            <label for="site">Site:</label>
-            <select name="site" id="site" onchange="this.form.submit()">
-                <% (sites || []).forEach(function(site) { %>
-                    <option value="<%= site %>" <%=selectedSite===site ? 'selected' : '' %>><%= site %>
-                    </option>
-                    <% }) %>
-            </select>
-        </form>
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Slug</th>
-                    <th>Version</th>
-                    <th>Active</th>
-                    <th>Update</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% (plugins || []).forEach(plugin=> { %>
-                    <tr>
-                        <td>
-                            <%= plugin.name %>
-                        </td>
-                        <td>
-                            <%= plugin.slug %>
-                        </td>
-                        <td>
-                            <%= plugin.version %>
-                        </td>
-                        <td>
-                            <%= plugin.active ? 'Yes' : 'No' %>
-                        </td>
-                        <td>
-                            <% if (plugin.updateAvailable) { %>
-                                <span style="color:#b26a00;">Yes → <%= plugin.newVersion || '' %></span>
-                                <% } else { %>
-                                    No
-                                    <% } %>
-                        </td>
-                    </tr>
-                    <% }); %>
-            </tbody>
-        </table>
+        <% if (typeof message==='string' && message) { %>
+            <div
+                style="background:#fff3cd;border:1px solid #ffe69c;padding:.75rem 1rem;margin-bottom:1rem;color:#664d03;">
+                <%= message %>
+            </div>
+            <% } %>
+                <form method="GET" action="/plugins" style="margin-bottom: 1rem;">
+                    <label for="site">Site:</label>
+                    <select name="site" id="site" onchange="this.form.submit()">
+                        <% (sites || []).forEach(function(site) { %>
+                            <option value="<%= site %>" <%=selectedSite===site ? 'selected' : '' %>><%= site %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </form>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Slug</th>
+                            <th>Version</th>
+                            <th>Active</th>
+                            <th>Update</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (!plugins || plugins.length===0) { %>
+                            <tr>
+                                <td colspan="5" style="color:#555;">No plugins to show for the selected site.</td>
+                            </tr>
+                            <% } %>
+                                <% (plugins || []).forEach(plugin=> { %>
+                                    <tr>
+                                        <td>
+                                            <%= plugin.name %>
+                                        </td>
+                                        <td>
+                                            <%= plugin.slug %>
+                                        </td>
+                                        <td>
+                                            <%= plugin.version %>
+                                        </td>
+                                        <td>
+                                            <%= plugin.active ? 'Yes' : 'No' %>
+                                        </td>
+                                        <td>
+                                            <% if (plugin.updateAvailable) { %>
+                                                <span style="color:#b26a00;">Yes → <%= plugin.newVersion || '' %></span>
+                                                <% } else { %>
+                                                    No
+                                                    <% } %>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                    </tbody>
+                </table>
     </div>
 </body>
 

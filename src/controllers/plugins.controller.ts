@@ -25,11 +25,10 @@ export class PluginsController {
         try {
             const sites = await getSites();
             const selectedSite = (req.query.site as string) || sites[0] || '';
-            if (!selectedSite) {
-                res.status(400).send('No site found. Ensure a plugin registers or set WORDPRESS_SITES/WORDPRESS_API_URL.');
-                return;
-            }
-            const inv = await getInventory(selectedSite);
+            const message = !selectedSite
+                ? 'No sites registered yet. Visit a WordPress site with the connector active or set WORDPRESS_SITES to see data here.'
+                : '';
+            const inv = selectedSite ? await getInventory(selectedSite) : null;
             const plugins = (inv?.plugins || []).map(p => ({
                 name: p.name,
                 slug: p.slug,
@@ -38,7 +37,7 @@ export class PluginsController {
                 updateAvailable: p.updateAvailable,
                 newVersion: p.newVersion || null,
             }));
-            res.render('plugins', { plugins, sites, selectedSite });
+            res.render('plugins', { plugins, sites, selectedSite, message });
         } catch (error) {
             res.status(500).send('Error fetching plugins');
         }
