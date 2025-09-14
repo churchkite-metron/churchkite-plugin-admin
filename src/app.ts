@@ -10,8 +10,14 @@ const app = express();
 // Middleware setup
 app.use((req, res, next) => {
     (res as any).locals = (res as any).locals || {};
-    const isProd = (process.env.CONTEXT === 'production') || (process.env.NODE_ENV === 'production');
-    (res as any).locals.isProd = isProd;
+    const hostHeader = (req.headers['x-forwarded-host'] as string) || (req.headers.host as string) || '';
+    const host = String(hostHeader).toLowerCase();
+    const prodHost = (process.env.PROD_HOST || '').toLowerCase();
+    const envSaysProd = (process.env.CONTEXT === 'production') || (process.env.NODE_ENV === 'production');
+    const isLocalHost = /localhost|127\.0\.0\.1/.test(host);
+    const isNetlifyPreview = host.includes('--'); // deploy-preview / branch deploy convention
+    const computedProd = prodHost ? host === prodHost : (!isLocalHost && !isNetlifyPreview);
+    (res as any).locals.isProd = envSaysProd || computedProd;
     next();
 });
 app.use((req, res, next) => {
